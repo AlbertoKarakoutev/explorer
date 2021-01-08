@@ -2,20 +2,20 @@ PVector[] points = new PVector[10];
 float[] colors = new float[10];
 PImage grass;
 Player player;
+float[] playerChunk = {0, 0};
 Chunk[][] chunks;
+int chunkNumber = 4;
 static final float chunkSize = 15000;
 
 void setup() {
   fullScreen(P3D);
-
-
   grass = loadImage("grass.jpeg");
   grass.resize(200, 200);
   
   noiseSeed(123);
 
   player = new Player();
-  chunks = new Chunk[4][4];
+  chunks = new Chunk[chunkNumber][chunkNumber];
   calculateChunks(chunks);
   
   for (int i = 0; i < colors.length; i++) {
@@ -30,9 +30,13 @@ void draw() {
   perspective(PI/3, float(width)/float(height), (height/2) / tan((PI/3)/2)/10, 30000); 
   lights();
   noStroke();
-  player.update();
   strokeWeight(1);
-  calculateChunks(chunks);
+  
+  if((int)playerChunk[0] != (int)player.getChunk()[0] || (int)playerChunk[1] != (int)player.getChunk()[1]){
+    calculateChunks(chunks);
+  }
+  playerChunk = player.getChunk();
+  player.update();
   
   for(int i = 0; i < chunks.length; i++){
     for(int j = 0; j < chunks[0].length; j++){
@@ -59,11 +63,11 @@ void draw() {
   
   //println("Radius: " + player.getRadius());
   //println("Location: " + player.getLocation());
-  println("Direction: " + player.getDirection());
+  //println("Direction: " + player.getDirection());
   //println("Center chunk: " + chunks[1][1].getPosition());
-  println("Player chunk: " + player.getChunk(chunkSize)[0] + " " + player.getChunk(chunkSize)[1]);
+  //println("Player chunk: " + player.getChunk()[0] + " " + player.getChunk()[1]);
   //println("Stopped: " + player.stop);
-  println(" ");
+  //println(" ");
 
   //for (int i = 2; i < points.length; i++) {
   //  PVector cv = points[i];
@@ -79,8 +83,8 @@ void draw() {
 
 void calculateChunks(Chunk[][] chunks){
   PVector playerChunk = new PVector();
-  playerChunk.x = player.getChunk(chunkSize)[0]*chunkSize;
-  playerChunk.z = player.getChunk(chunkSize)[1]*chunkSize;
+  playerChunk.x = player.getChunk()[0]*chunkSize;
+  playerChunk.z = player.getChunk()[1]*chunkSize;
   for(int i = 0; i < chunks.length; i++){
     for(int j = 0; j < chunks[0].length; j++){
       PVector chunkPos = new PVector();
@@ -94,7 +98,6 @@ void calculateChunks(Chunk[][] chunks){
       chunks[i][j] = new Chunk(chunkPos, chunkSize, chunkColor, chunkID, grass);
     }
   }
-  println("");
 }
   
 void mouseWheel(MouseEvent event){

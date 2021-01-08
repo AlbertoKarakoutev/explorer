@@ -96,7 +96,7 @@ class Player{
     }
   }
   
-  float[] getChunk(float chunkSize){
+  float[] getChunk(){
     float[] chunkNum = new float[2];
     if(direction.x>=0){
       chunkNum[0] = floor((chunkSize + direction.x)/chunkSize);

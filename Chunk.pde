@@ -3,11 +3,13 @@ class Chunk{
   PVector position;
   float size;
   color chunkColor;
-  int vertecies = 35;
+  int vertecies = 300;
   float scale;
   float[] chunk;
   float[][] noise = new float[vertecies+1][vertecies+1];
   PImage grass;
+  PShape chunkShape = createShape(GROUP);
+  boolean initialized;
   
   public Chunk(PVector position, float size, color c, float[] chunk, PImage grass){
     this.position = position.copy();
@@ -16,35 +18,48 @@ class Chunk{
     this.chunk = chunk;
     this.grass = grass;
     chunkColor = c;
+    
+    float noiseDetail = (chunk[0] + chunk[1])*(chunk[0] + chunk[1] + 1)/2 + chunk[1];
+    noiseDetail = 5;
+    noiseDetail((int)noiseDetail);
+    
+    for(int z = 0; z < vertecies+1; z++){
+      for(int x = 0; x < vertecies+1; x++){
+        noise[x][z] = getHeight((position.x + x*scale)/size, (position.z + z*scale)/size);
+      }
+    }
+    
+    for(int z = 0; z < vertecies; z++){
+      PShape triangle = createShape();
+      triangle.beginShape(TRIANGLE_STRIP);
+      for(int x = 0; x < vertecies+1; x++){
+        
+        //if(noise[x][z] < -0)fill(255);
+        //if(noise[x][z] > -7000)fill(chunkColor);
+        //if(noise[x][z] > 2000)fill(0, 0, 190);
+        
+        triangle.vertex(x*scale, noise[x][z], z*scale);
+        triangle.vertex(x*scale, noise[x][z+1], (z+1)*scale);
+      }
+      triangle.endShape();
+      chunkShape.addChild(triangle);
+    }
+    //box(size, 20, size);
   }
 
-  float getHeight(float x, float y){
-    float noise = noise(x*3, y*3);
-    float value = map(noise, 0, 1, 0, 10000);
+  float getHeight(float x, float z){
+    float noise = noise(x*2, z*2);
+    float value = map(noise, 0, 1, 0, -5000);
     return value;
   }
   
   void display(){
-    shapeMode(CENTER);
+    
     pushMatrix();
-    translate(position.x, 0, position.z);
-    for(int y = 0; y < vertecies; y++){
-      beginShape(TRIANGLE_STRIP);
-      for(int x = 0; x < vertecies+1; x++){
-        
-        
-        if(getHeight((position.x + x*scale)/size, (position.z + y*scale)/size) < 3000)fill(255);
-        if(getHeight((position.x + x*scale)/size, (position.z + y*scale)/size) > 3000)fill(chunkColor);
-        if(getHeight((position.x + x*scale)/size, (position.z + y*scale)/size) > 6000)fill(0, 0, 190);
-        //text(position.x + " " + position.z, position.x+size/2, 0, position.z+size/2);
-        textSize(20);
-        vertex(x*scale, getHeight((position.x + x*scale)/size, (position.z + y*scale)/size), y*scale);
-        vertex(x*scale, getHeight((position.x + x*scale)/size, (position.z + (y+1)*scale)/size), (y+1)*scale);
-      }
-      endShape();
-    }
-    //box(size, 20, size);
+    translate(position.x, 5000, position.z);
+    shape(chunkShape);
     popMatrix();
+    
   }
   
   PVector getPosition(){
