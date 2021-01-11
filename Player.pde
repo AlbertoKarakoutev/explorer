@@ -39,6 +39,12 @@ class Player{
     rotateY(map(mouseX, 0, width, -1.5, 1.5));
     shapeMode(CENTER);
     shape(airplane);
+    textSize(200);
+    noLights();
+    fill(255);
+    rotateX(-HALF_PI);
+    rotateZ(-HALF_PI);
+    text((int)direction.x + ", " + (int)direction.y + ", " + (int)direction.z, -1000, -400, 0);
     //box(50);
     popMatrix();
     
@@ -92,6 +98,7 @@ class Player{
       }
       if(key == 'r'){
         direction = new PVector(0, 0, 0);
+        calculateChunks();
       }
     }
   }
