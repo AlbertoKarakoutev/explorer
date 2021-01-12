@@ -1,6 +1,5 @@
 class Chunk{
  
-  int vertecies = 200;
   float scale = chunkSize/vertecies;
   PVector position;
   color chunkColor;
@@ -9,27 +8,42 @@ class Chunk{
   
   PShape chunkShape = createShape(GROUP);
   
+  Water water;
+  
   public Chunk(PVector position){
     this.position = position.copy();
+    water = new Water(position);
     noiseDetail(20);
     noStroke();
+    
+    for(int z = 0; z < vertecies+1; z++){
+      for(int x = 0; x < vertecies+1; x++){
+        noise[x][z] = getHeight((position.x + x*scale)/chunkSize, (position.z + z*scale)/chunkSize);
+      }
+    }
+    
     for(int z = 0; z < vertecies; z++){
       PShape row = createShape();
-      row.beginShape(QUAD_STRIP);
+      row.beginShape(TRIANGLE_STRIP);
       for(int x = 0; x < vertecies+1; x++){
-        row.vertex(x*scale, getHeight((position.x + x*scale)/chunkSize, (position.z + z*scale)/chunkSize), z*scale);
-        row.vertex(x*scale, getHeight((position.x + x*scale)/chunkSize, (position.z + (z+1)*scale)/chunkSize), (z+1)*scale);
+        //if(getHeight((position.x + x*scale)/chunkSize, (position.z + z*scale)/chunkSize) < 1000){
+        //  fill(0, 0, 255);
+        //}else{
+        //  fill(0, 255, 0);
+        //}
+        row.vertex(x*scale, noise[x][z], z*scale);
+        row.vertex(x*scale, noise[x][z+1], (z+1)*scale);
       }
       row.endShape(CLOSE);
       chunkShape.addChild(row);
     }
+    
   }
 
  
  float getHeight(float x, float z){
-    float noise = noise(x, z);
-    //float noise = random(0.4, 0.6);
-    float value = map(noise, 0, 1, 0, 2000);
+    float noiseLevel = noise(x,z);
+    float value = map(noiseLevel, 0, 1, -5000, 5000);
     return value;
   }
   
@@ -38,12 +52,10 @@ class Chunk{
     pushMatrix();
     translate(position.x-chunkSize/2, position.y, position.z);
     shape(chunkShape);
+    translate(0, 1500, 0);
+    water.display();
     popMatrix();
     
-  }
-  
-  PShape getChunkShape(){
-    return this.chunkShape;
   }
   
   PVector getPosition(){

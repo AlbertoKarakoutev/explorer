@@ -4,13 +4,13 @@ Player player;
 float[] playerChunk = {1, 0};
 Chunk[][] chunks;
 int chunkNumber = 4;
+float offset = 0;
+OpenSimplex2F simplexNoise;
 
 Chunk targetChunk;
 
-static final float chunkSize = 1000;
-
-//coloring not right 
-//slight lag when loading new chunks
+static int vertecies = 50;
+static final float chunkSize = 10000;
 
 void settings(){
   
@@ -22,6 +22,7 @@ void setup() {
   
   noiseSeed(123);
 
+  simplexNoise = new OpenSimplex2F(123);
   player = new Player();
   chunks = new Chunk[chunkNumber][chunkNumber];
   calculateChunks();
@@ -38,8 +39,12 @@ void draw() {
   noStroke();
    //<>//
   if((int)playerChunk[0] != (int)player.getChunk()[0] || (int)playerChunk[1] != (int)player.getChunk()[1]){
+    float now = millis();
     updateChunks();
     //calculateChunks();
+    
+    float timeTaken = millis() - now;
+    println("This took " + timeTaken/1000 + " seconds.");
   }
   playerChunk = player.getChunk();
   player.update();
@@ -48,6 +53,7 @@ void draw() {
   
   for(int i = 0; i < chunks.length; i++){
     for(int j = 0; j < chunks[0].length; j++){
+      //blendMode(REPLACE);
       chunks[i][j].display();
     }
   }
@@ -106,12 +112,12 @@ void updateChunks(){
                chunks[i-1][j] = chunks[i][j]; 
             }
           }
-          for(int j = 0; j < chunks.length; j++){
-            PVector chunkPos = new PVector(0, 0, 0); //<>//
+          for(int i = 0; i < chunks.length; i++){
+            PVector chunkPos = new PVector(0, 0, 0);
             chunkPos.x = playerChunkCoordinates.x + (chunks.length-3)*chunkSize;
-            chunkPos.z = playerChunkCoordinates.z + (j-1)*chunkSize;
-            chunks[chunks.length-1][j] = new Chunk(chunkPos);
-          }
+            chunkPos.z = playerChunkCoordinates.z + (i-1)*chunkSize;
+            chunks[chunks.length-1][i] = new Chunk(chunkPos);
+          } //<>//
           break;
           
         case "east":
@@ -132,8 +138,6 @@ void updateChunks(){
             for(int j = 1; j < chunks[0].length; j++){
                chunks[i][j-1] = chunks[i][j]; 
             }
-          }
-          for(int i = 0; i < chunks.length; i++){
             PVector chunkPos = new PVector(0, 0, 0);
             chunkPos.x = playerChunkCoordinates.x + (i-2)*chunkSize;
             chunkPos.z = playerChunkCoordinates.z + (chunks.length-2)*chunkSize;
@@ -146,8 +150,6 @@ void updateChunks(){
             for(int j = chunks.length-2; j >= 0; j--){
                chunks[i][j+1] = chunks[i][j]; 
             }
-          }
-          for(int i = 0; i < chunks.length; i++){
             PVector chunkPos = new PVector(0, 0, 0);
             chunkPos.x = playerChunkCoordinates.x + (i-2)*chunkSize;
             chunkPos.z = playerChunkCoordinates.z - chunkSize;
@@ -156,66 +158,17 @@ void updateChunks(){
           break;
       }
   
-    //println(movementDirection);
+    println(movementDirection);
 }
   
 void mouseWheel(MouseEvent event){
   if(event.getCount()<0){
-    player.radius-=50;
+    vertecies+=10;
   }else{
-    player.radius+=50;
+    if(vertecies-10>0)vertecies-=10;
   }
-}
-
-void keyPressed(){
- if(key == '1'){
-  targetChunk = chunks[0][0];
-  println("Target is [0][0]");
- }
- if(key == '2'){
-  targetChunk = chunks[0][1];
-  println("Target is [0][1]");
- }
- if(key == '3'){
-  targetChunk = chunks[0][2];
-  println("Target is [0][2]");
- }
- if(key == '4'){
-  targetChunk = chunks[0][3];
-  println("Target is [0][3]");
- }
- if(key == '5'){
-  targetChunk = chunks[1][0];
-  println("Target is [1][0]");
- }
- if(key == '6'){
-  targetChunk = chunks[1][1];
-  println("Target is [1][1]");
- }
- if(key == '7'){
-  targetChunk = chunks[1][2];
-  println("Target is [1][2]");
- }
- if(key == '8'){
-  targetChunk = chunks[1][3];
-  println("Target is [1][3]");
- }
- if(key == '9'){
-  targetChunk = chunks[2][0];
-  println("Target is [2][0]");
- }
- if(key == '0'){
-  targetChunk = chunks[2][1];
-  println("Target is [2][1]");
- }
- if(key == 'q'){
-  targetChunk.getPosition().y+=1; 
-  println(targetChunk.getPosition().y); 
- }
- if(key == 'e'){
-  targetChunk.getPosition().y-=1; 
-  println(targetChunk.getPosition().y); 
- }
+  println("Vertecies: " + vertecies);
+  calculateChunks();
 }
 
 void mousePressed() {

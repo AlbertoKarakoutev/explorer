@@ -17,7 +17,7 @@ class Player{
     
       airplane = loadShape("Plane.obj");
       location = new PVector(0,0,0);
-      direction = new PVector(0, 0, 0);
+      direction = new PVector(0, -3000, 0);
 
   }
   
@@ -70,12 +70,6 @@ class Player{
     }
     camera(location.x, location.y, location.z, direction.x, direction.y, direction.z, 0, 1, 0);  
     
-    if(keyPressed){
-      if (key == 'f'){
-        scale(1, -1, 1);
-        //translate(-location.x,location.y, location.z);
-      } 
-    }
     endCamera();
 }
 
