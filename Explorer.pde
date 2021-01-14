@@ -7,7 +7,7 @@ int chunkNumber = 4;
 float offset = 0;
 Chunk targetChunk;
 
-static int vertecies = 10;
+static int vertecies = 50;
 static final float chunkSize = 20000;
 
 void settings(){
