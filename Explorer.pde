@@ -5,12 +5,11 @@ float[] playerChunk = {1, 0};
 Chunk[][] chunks;
 int chunkNumber = 4;
 float offset = 0;
-OpenSimplex2F simplexNoise;
 
 Chunk targetChunk;
 
-static int vertecies = 50;
-static final float chunkSize = 10000;
+static int vertecies = 30;
+static final float chunkSize = 20000;
 
 void settings(){
   
@@ -22,7 +21,6 @@ void setup() {
   
   noiseSeed(123);
 
-  simplexNoise = new OpenSimplex2F(123);
   player = new Player();
   chunks = new Chunk[chunkNumber][chunkNumber];
   calculateChunks();
@@ -34,7 +32,7 @@ void setup() {
 
 void draw() {
  
-  background(50);
+  background(0, 255, 255, 200);
   perspective(PI/3, float(width)/float(height), (height/2) / tan((PI/3)/2)/10, 30000); 
   noStroke();
    //<>//
