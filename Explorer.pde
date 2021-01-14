@@ -5,10 +5,9 @@ float[] playerChunk = {1, 0};
 Chunk[][] chunks;
 int chunkNumber = 4;
 float offset = 0;
-
 Chunk targetChunk;
 
-static int vertecies = 30;
+static int vertecies = 10;
 static final float chunkSize = 20000;
 
 void settings(){
@@ -22,6 +21,7 @@ void setup() {
   noiseSeed(123);
 
   player = new Player();
+  
   chunks = new Chunk[chunkNumber][chunkNumber];
   calculateChunks();
   
@@ -32,9 +32,12 @@ void setup() {
 
 void draw() {
  
-  background(0, 255, 255, 200);
-  perspective(PI/3, float(width)/float(height), (height/2) / tan((PI/3)/2)/10, 30000); 
+  float skyColor = map(player.getDirection().y, -3000, -30000, 255, 0);
+  if(player.getDirection().y > -3000)skyColor = 255;
+  background(color(0, skyColor, skyColor));
+  perspective(map(player.getSpeed(), 0, player.getMaximumSpeed(), PI/2, PI/(1.6)), float(width)/float(height), (height/2) / tan((PI/3)/2)/10, 30000); 
   noStroke();
+  
    //<>//
   if((int)playerChunk[0] != (int)player.getChunk()[0] || (int)playerChunk[1] != (int)player.getChunk()[1]){
     float now = millis();
@@ -51,7 +54,6 @@ void draw() {
   
   for(int i = 0; i < chunks.length; i++){
     for(int j = 0; j < chunks[0].length; j++){
-      //blendMode(REPLACE);
       chunks[i][j].display();
     }
   }

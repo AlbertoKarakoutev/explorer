@@ -32,14 +32,13 @@ class Chunk{
         if(noise[x][z].y < -2000){
           fill(200);
         }else{
-          fill(78, 99, 12);
+          fill(31, 97, 16);
         }
         PShape triangle = createShape();
         triangle.beginShape(TRIANGLES);
           triangle.vertex(noise[x][z].x, noise[x][z].y, noise[x][z].z, 0, 0);
           triangle.vertex(noise[x][z+1].x, noise[x][z+1].y, noise[x][z+1].z, 0, 0);
           triangle.vertex(noise[x+1][z].x, noise[x+1][z].y, noise[x+1][z].z, 0, 0);
-          
           triangle.vertex(noise[x+1][z].x, noise[x+1][z].y, noise[x+1][z].z, 0, 0);
           triangle.vertex(noise[x+1][z+1].x, noise[x+1][z+1].y, noise[x+1][z+1].z, 0, 0);
           triangle.vertex(noise[x][z+1].x, noise[x][z+1].y, noise[x][z+1].z, 0, 0);
