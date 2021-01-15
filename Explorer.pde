@@ -8,7 +8,8 @@ float offset = 0;
 Chunk targetChunk;
 
 static int vertecies = 50;
-static final float chunkSize = 20000;
+static final float chunkSize = 5000;
+static float scale = chunkSize/vertecies;
 
 void settings(){
   
@@ -32,10 +33,10 @@ void setup() {
 
 void draw() {
  
-  float skyColor = map(player.getDirection().y, -3000, -30000, 255, 0);
-  if(player.getDirection().y > -3000)skyColor = 255;
+  float skyColor = map(player.getLocation().y, -3000, -30000, 255, 0);
+  if(player.getLocation().y > -3000)skyColor = 255;
   background(color(0, skyColor, skyColor));
-  perspective(map(player.getSpeed(), 0, player.getMaximumSpeed(), PI/2, PI/(1.6)), float(width)/float(height), (height/2) / tan((PI/3)/2)/10, 30000); 
+  perspective(map(player.getSpeed(), 0, player.getMaximumSpeed(), PI/2, PI/(1.9)), float(width)/float(height), (height/2) / tan((PI/3)/2)/10, 30000); 
   noStroke();
   
    //<>//
@@ -58,7 +59,8 @@ void draw() {
     }
   }
   
-  
+  pushMatrix();
+  translate(0, -3000, 0);
   fill(255,0,0);
   box(50);
   stroke(255, 0, 0);
@@ -68,12 +70,13 @@ void draw() {
   line(0, -500, 0, 0, 500, 0);
   stroke(0, 0, 255);
   line(0, 0, -500, 0, 0, 500);
+  popMatrix();
   
   //println("Radius: " + player.getRadius());
   //println("Location: " + player.getLocation());
   //println("Direction: " + player.getDirection());
   //println("Center chunk: " + chunks[1][1].getPosition());
-  //println("Player chunk: " + player.getChunk()[0] + " " + player.getChunk()[1]);
+  println("Player chunk: " + player.getChunk()[0] + " " + player.getChunk()[1]);
   //println("Stopped: " + player.stop);
   //println(" ");
 }

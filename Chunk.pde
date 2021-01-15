@@ -1,6 +1,5 @@
 class Chunk{
  
-  float scale = chunkSize/vertecies;
   PVector position;
   color chunkColor;
   PVector[][] noise = new PVector[vertecies+1][vertecies+1];
@@ -20,16 +19,16 @@ class Chunk{
     
     for(int z = 0; z < vertecies+1; z++){
       for(int x = 0; x < vertecies+1; x++){
-        noise[x][z] = new PVector(x*scale, getHeight((position.x + x*scale)/chunkSize, (position.z + z*scale)/chunkSize), z*scale);
+         noise[x][z] = new PVector(x*scale, calculateHeight((position.x + x*scale)/chunkSize, (position.z + z*scale)/chunkSize), z*scale);
+          
+        //calculateHeight((position.x + x*scale)/chunkSize, (position.z + z*scale)/chunkSize)
       }
     }
     
     for(int z = 0; z < vertecies; z++){
-      PShape row = createShape();
-      
       for(int x = 0; x < vertecies; x++){
         
-        if(noise[x][z].y < -2000){
+        if(noise[x][z].y < -2500){
           fill(200);
         }else{
           fill(31, 97, 16);
@@ -49,21 +48,24 @@ class Chunk{
   }
 
  
- float getHeight(float x, float z){
+ float calculateHeight(float x, float z){
     float noiseLevel = noise(x*3,z*3);
-    float value = map(noiseLevel, 0, 1, -5000, 5000);
+    float value = map(noiseLevel, 0, 1, 0, (-0.75)*chunkSize);
     return value;
   }
   
   void display(){
     shapeMode(CORNER);
     pushMatrix();
-    translate(position.x-chunkSize/2, position.y, position.z);
+    translate(position.x, position.y, position.z);
     shape(chunkShape);
-    translate(0, 1500, 0);
     water.display();
     popMatrix();
     
+  }
+  
+  PVector getVertex(int x, int y){
+    return this.noise[x][y];
   }
   
   PVector getPosition(){

@@ -1,9 +1,10 @@
 
 class Player{
  
+  PVector cameraLocation;
   PVector location;
-  PVector direction;
   
+  PVector playerVertex;
   float viewFactor = 10;
   float radius = 3000/viewFactor;
   float speed = 0;
@@ -15,19 +16,19 @@ class Player{
   PShape airplane;
   
   ParticleSystem ps;
-
+  ParticleSystem collisionExplosion;
   public Player(){
     
       airplane = loadShape("Plane.obj");
-      
+      playerVertex = new PVector();
       airplane.scale(1/viewFactor);
-      location = new PVector(0,0,0);
-      direction = new PVector(0, -3000, 0);
+      cameraLocation = new PVector(0,0,0);
+      location = new PVector(0, -3000, 0);
 
-      PVector psLocation = direction.copy();
+      PVector psLocation = location.copy();
       psLocation.y +=5;
       ps = new ParticleSystem(200, psLocation);
-
+      
   }
   
   void update(){
@@ -36,12 +37,12 @@ class Player{
   }
   
   void look(){
-    location.x = direction.x + radius * cos(theta) * sin(-fi);
-    location.z = direction.z + radius * sin(theta) * sin(-fi);
-    location.y = direction.y + radius * cos(-fi);
+    cameraLocation.x = location.x + radius * cos(theta) * sin(-fi);
+    cameraLocation.z = location.z + radius * sin(theta) * sin(-fi);
+    cameraLocation.y = location.y + radius * cos(-fi);
       
     pushMatrix();
-    translate(direction.x, direction.y, direction.z);
+    translate(location.x, location.y, location.z);
     //Rotate model in the proper direction
     rotateY(-theta);
     rotateZ(fi);
@@ -53,7 +54,7 @@ class Player{
     fill(255);
     rotateX(-HALF_PI);
     rotateZ(-HALF_PI);
-    text((int)direction.x + ", " + (int)direction.y + ", " + (int)direction.z, -1000/viewFactor, -400/viewFactor, 0);
+    text((int)location.x + ", " + (int)location.y + ", " + (int)location.z, -1000/viewFactor, -400/viewFactor, 0);
     //box(50);
     popMatrix();
     
@@ -69,7 +70,7 @@ class Player{
     if(frameCount == 1){
       fi=2.4;
     }
-    camera(location.x, location.y, location.z, direction.x, direction.y, direction.z, 0, 1, 0);  
+    camera(cameraLocation.x, cameraLocation.y, cameraLocation.z, location.x, location.y, location.z, 0, 1, 0);  
     
     endCamera();
   }
@@ -87,36 +88,34 @@ class Player{
   }
 
   void move(){
+    detectCollision();
     
-    PVector wind = location.copy();
-    PVector psLocation = direction.copy();
+    PVector wind = cameraLocation.copy();
+    PVector psLocation = location.copy();
     wind.y-=500;
     psLocation.y +=5;
     ps.run(psLocation);
     float ratio = (radius + speed)/radius;
+    
+    
     if(keyPressed){
       if(speed < speedMaximum)speed+=speedMaximum/frameRate; 
       if (key == 'w') {
-        direction.x = (1-ratio)*location.x + ratio*direction.x;
-        direction.y = (1-ratio)*location.y + ratio*direction.y;
-        direction.z = (1-ratio)*location.z + ratio*direction.z;
+        location.x = (1-ratio)*cameraLocation.x + ratio*location.x;
+        location.y = (1-ratio)*cameraLocation.y + ratio*location.y;
+        location.z = (1-ratio)*cameraLocation.z + ratio*location.z;
        
         wind.y += 1000;
-        ps.applyForce(wind.sub(direction).div(10000));
+        ps.applyForce(wind.sub(location).div(10000));
         for (int i = 0; i < 10; i++) {
           ps.addParticle();
         }
-      }
-      if (key == 's') { 
-        direction.x = (ratio)*location.x + (1-ratio)*direction.x;
-        direction.y = (ratio)*location.y + (1-ratio)*direction.y;
-        direction.z = (ratio)*location.z + (1-ratio)*direction.z;
       }
       if (keyCode == SHIFT) {
         speedMaximum += 1;
       }
       if(key == 'r'){
-        direction = new PVector(0, 0, 0);
+        location = new PVector(0, -5000, 0);
         calculateChunks();
       }
     }else{
@@ -125,33 +124,46 @@ class Player{
         if(speed > 0){
           speed-=(speedMaximum/4)/frameRate; 
           if(speed >= 0){
-            direction.y+=map(speed/speedMaximum, 1, 0, 0, 10);
+            location.y+=map(speed/speedMaximum, 1, 0, 0, 10);
           }
         }else if(speed<0){
           if(!stop){
-            if(direction.y<2000)direction.y+=10;
+            if(location.y<2000)location.y+=10;
           }
         }
       
-        direction.x = (1-ratio)*location.x + ratio*direction.x;
-        direction.y = (1-ratio)*location.y + ratio*direction.y;
-        direction.z = (1-ratio)*location.z + ratio*direction.z;
+        location.x = (1-ratio)*cameraLocation.x + ratio*location.x;
+        location.y = (1-ratio)*cameraLocation.y + ratio*location.y;
+        location.z = (1-ratio)*cameraLocation.z + ratio*location.z;
       }
     }
     
   }
   
+  void detectCollision(){
+    playerVertex.x = (location.x>0) ? floor(abs((player.getLocation().x%chunkSize)/scale)) : vertecies - floor(abs((player.getLocation().x%chunkSize)/scale));
+    playerVertex.y = (location.z>0) ? floor(abs((player.getLocation().z%chunkSize)/scale)) : vertecies - floor(abs((player.getLocation().z%chunkSize)/scale));
+    float terrainHeightAtPlayerLocation = 0;
+    terrainHeightAtPlayerLocation = chunks[1][1].getVertex((int)playerVertex.x, (int)playerVertex.y).y - airplane.getHeight();
+    println(terrainHeightAtPlayerLocation);
+    if(player.getLocation().y > terrainHeightAtPlayerLocation){
+      location.y -= 100;
+      //collisionExplosion = new ParticleSystem(500, location.copy());
+      stop = !stop;
+    }
+  }
+  
   float[] getChunk(){
     float[] chunkNum = new float[2];
-    if(direction.x>=0){
-      chunkNum[0] = floor((chunkSize + direction.x)/chunkSize);
+    if(location.x>=0){
+      chunkNum[0] = floor((chunkSize + location.x)/chunkSize);
     }else{
-      chunkNum[0] = ceil(direction.x/chunkSize);
+      chunkNum[0] = ceil(location.x/chunkSize);
     }
-    if(direction.z>=0){
-      chunkNum[1] = floor(direction.z/chunkSize);
+    if(location.z>=0){
+      chunkNum[1] = floor(location.z/chunkSize);
     }else{
-      chunkNum[1] = ceil((-chunkSize + direction.z)/chunkSize);
+      chunkNum[1] = ceil((-chunkSize + location.z)/chunkSize);
     }
     return chunkNum;
   }
@@ -164,12 +176,12 @@ class Player{
     return this.speedMaximum;
   }
 
-  PVector getLocation(){
-    return this.location;
+  PVector getCameraLocation(){
+    return this.cameraLocation;
   }
   
-  PVector getDirection(){
-    return this.direction;
+  PVector getLocation(){
+    return this.location;
   }
   
   float getRadius(){

@@ -1,13 +1,13 @@
 class ParticleSystem {
 
-  ArrayList<Particle> particles;    // An arraylist for all the particles
+  ArrayList<Particle> particles;
   PVector origin;    
 
   ParticleSystem(int num, PVector v) {
-    particles = new ArrayList<Particle>();              // Initialize the arraylist
+    particles = new ArrayList<Particle>();
     origin = v.copy();         
     for (int i = 0; i < num; i++) {
-      particles.add(new Particle(origin));         // Add "num" amount of particles to the arraylist
+      particles.add(new Particle(origin));
     }
   }
 
@@ -22,11 +22,9 @@ class ParticleSystem {
     }
   }
 
-  // Method to add a force vector to all particles currently in the system
   void applyForce(PVector dir) {
-    // Enhanced loop!!!
     for (Particle p : particles) {
-      p.applyForce(dir);
+      p.loc.add(dir);
     }
   }  
 

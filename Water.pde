@@ -13,12 +13,10 @@ class Water{
     offset+=0.0001;
     offset=offset%10000000;
     shapeMode(CORNER);
-    float zoff = offset;
     for(int i = 0; i < wavePoints+1; i++){
       for(int j = 0; j < wavePoints+1; j++){
         waves[i][j] = getHeight((position.x + i*scale)/chunkSize, offset+(position.z + j*scale)/chunkSize);
       }
-      zoff+=0.2;
     }
     
     fill(0, 150, 255, 200);
