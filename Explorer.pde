@@ -1,45 +1,56 @@
-PVector[] points = new PVector[10];
-float[] colors = new float[10];
-Player player;
-float[] playerChunk = {1, 0};
-Chunk[][] chunks;
-int chunkNumber = 4;
-float offset = 0;
-Chunk targetChunk;
+PVector[] points = new PVector[10]; //<>//
 
-static int vertecies = 50;
-static final float chunkSize = 5000;
+float offset = 0;
+float[] playerChunk = {1, 0};
+
+int chunkNumber = 4;
+
+Player player;
+
+Chunk targetChunk;
+Chunk[][] chunks;
+
+boolean stop = true;
+boolean maintainSpeed = false;
+
+static int vertecies = 200;
+static float chunkSize = 5000;
 static float scale = chunkSize/vertecies;
 
+PImage loading;
+
 void settings(){
-  
+ 
  fullScreen(P3D);
  smooth(8); 
+ 
+  
 }
 
-void setup() {
-  
-  noiseSeed(123);
 
+void setup() {
+  noiseSeed(123);
+  
+  loading = loadImage("loading.png");
+  loading.resize(width,height);
+  background(loading);
+    
   player = new Player();
-  
   chunks = new Chunk[chunkNumber][chunkNumber];
-  calculateChunks();
-  
-  for (int i = 0; i < colors.length; i++) {
-    colors[i] = random(100, 150);
-  }
+   //<>//
 }
 
 void draw() {
- 
+  
+  loadingScreen();
+  
   float skyColor = map(player.getLocation().y, -3000, -30000, 255, 0);
   if(player.getLocation().y > -3000)skyColor = 255;
   background(color(0, skyColor, skyColor));
   perspective(map(player.getSpeed(), 0, player.getMaximumSpeed(), PI/2, PI/(1.9)), float(width)/float(height), (height/2) / tan((PI/3)/2)/10, 30000); 
   noStroke();
   
-   //<>//
+  
   if((int)playerChunk[0] != (int)player.getChunk()[0] || (int)playerChunk[1] != (int)player.getChunk()[1]){
     float now = millis();
     updateChunks();
@@ -76,12 +87,14 @@ void draw() {
   //println("Location: " + player.getLocation());
   //println("Direction: " + player.getDirection());
   //println("Center chunk: " + chunks[1][1].getPosition());
-  println("Player chunk: " + player.getChunk()[0] + " " + player.getChunk()[1]);
+  //println("Player chunk: " + player.getChunk()[0] + " " + player.getChunk()[1]);
   //println("Stopped: " + player.stop);
   //println(" ");
 }
 
 void calculateChunks(){
+  
+  scale = chunkSize/vertecies;
   PVector playerChunkCoordinates = new PVector();
   playerChunkCoordinates.x = player.getChunk()[0]*chunkSize;
   playerChunkCoordinates.y = 0;
@@ -106,7 +119,7 @@ void updateChunks(){
   if(playerChunk[0] > player.getChunk()[0])movementDirection = "east";
   if(playerChunk[1] < player.getChunk()[1])movementDirection = "south";
   if(playerChunk[1] > player.getChunk()[1])movementDirection = "north";
-  
+  if(movementDirection.equals(""))movementDirection = "north";
       switch(movementDirection){
         
         case "west":
@@ -120,7 +133,7 @@ void updateChunks(){
             chunkPos.x = playerChunkCoordinates.x + (chunks.length-3)*chunkSize;
             chunkPos.z = playerChunkCoordinates.z + (i-1)*chunkSize;
             chunks[chunks.length-1][i] = new Chunk(chunkPos);
-          } //<>//
+          }
           break;
           
         case "east":
@@ -161,7 +174,24 @@ void updateChunks(){
           break;
       }
   
-    println(movementDirection);
+}
+  
+  
+void loadingScreen(){
+  if(frameCount == 1){
+    calculateChunks();  
+    float initialTime = 1000;
+    while(initialTime > 20){
+      float now = millis();
+      updateChunks();
+      initialTime = millis() - now;
+      vertecies-=2;
+    }
+    
+    println("Rendering at " + vertecies + " vertecies.");
+    
+    calculateChunks();  
+  }
 }
   
 void mouseWheel(MouseEvent event){
@@ -174,6 +204,12 @@ void mouseWheel(MouseEvent event){
   calculateChunks();
 }
 
+void keyPressed(){
+  if(keyCode == ENTER){
+    maintainSpeed = !maintainSpeed;
+  }
+}
+
 void mousePressed() {
-  player.stop = !player.stop;
+  stop = !stop;
 }

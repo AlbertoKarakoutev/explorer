@@ -1,8 +1,10 @@
 class Water{
   PVector position;
+  
   int wavePoints = 20;
   float scale = chunkSize/wavePoints;
   float[][] waves = new float[wavePoints+1][wavePoints+1];
+  
   PShape waterShape = createShape(GROUP);
   
   public Water(PVector position){
@@ -33,7 +35,7 @@ class Water{
   
   float getHeight(float x, float y){
     float noise = noise(x*3, y*3);
-    float value = map(noise, 0, 1, -400, 400);
+    float value = map(noise, 0, 1, 0, -300);
     return value;
   }
   

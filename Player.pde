@@ -1,15 +1,13 @@
-
 class Player{
  
   PVector cameraLocation;
   PVector location;
-  
   PVector playerVertex;
+  
   float viewFactor = 10;
   float radius = 3000/viewFactor;
   float speed = 0;
   float speedMaximum = (viewFactor > 2) ? 100/(viewFactor-2) : 100/viewFactor;
-  boolean stop = false;
   float theta;
   float fi;
 
@@ -17,6 +15,7 @@ class Player{
   
   ParticleSystem ps;
   ParticleSystem collisionExplosion;
+  
   public Player(){
     
       airplane = loadShape("Plane.obj");
@@ -49,13 +48,13 @@ class Player{
     rotateY(map(mouseX, 0, width, -1.5, 1.5));
     shapeMode(CENTER);
     shape(airplane);
-    textSize(200/viewFactor);
-    noLights();
-    fill(255);
-    rotateX(-HALF_PI);
-    rotateZ(-HALF_PI);
-    text((int)location.x + ", " + (int)location.y + ", " + (int)location.z, -1000/viewFactor, -400/viewFactor, 0);
-    //box(50);
+    popMatrix();
+    
+    pushMatrix();
+    translate(location.x, location.y, location.z);
+    rotateY(-theta);
+    rotateZ(fi);
+    displayInformation();
     popMatrix();
     
     if(!stop){
@@ -73,6 +72,16 @@ class Player{
     camera(cameraLocation.x, cameraLocation.y, cameraLocation.z, location.x, location.y, location.z, 0, 1, 0);  
     
     endCamera();
+  }
+
+  void displayInformation(){
+    textSize(200/viewFactor);
+    noLights();
+    fill(255);
+    rotateX(-HALF_PI);
+    rotateZ(-HALF_PI);
+    text((int)location.x + ", " + (int)location.y + ", " + (int)location.z, -1000/viewFactor, -400/viewFactor, 0);
+    text("Speed: " + speed, -500, -200, 0);
   }
 
   void rotateFI(float amount){
@@ -99,7 +108,7 @@ class Player{
     
     
     if(keyPressed){
-      if(speed < speedMaximum)speed+=speedMaximum/frameRate; 
+      if(speed < speedMaximum)speed+=(speedMaximum/4)/frameRate; 
       if (key == 'w') {
         location.x = (1-ratio)*cameraLocation.x + ratio*location.x;
         location.y = (1-ratio)*cameraLocation.y + ratio*location.y;
@@ -112,7 +121,7 @@ class Player{
         }
       }
       if (keyCode == SHIFT) {
-        speedMaximum += 1;
+        speedMaximum += 0.2;
       }
       if(key == 'r'){
         location = new PVector(0, -5000, 0);
@@ -122,10 +131,8 @@ class Player{
       if(!stop){
         rotateFI(map(speed/speedMaximum, 1, 0, 0, 5)/500);
         if(speed > 0){
-          speed-=(speedMaximum/4)/frameRate; 
-          if(speed >= 0){
-            location.y+=map(speed/speedMaximum, 1, 0, 0, 10);
-          }
+          if(!maintainSpeed)speed-=(speedMaximum/10)/frameRate; 
+          if(speed >= 0)location.y+=map(speed/speedMaximum, 1, 0, 0, 10);
         }else if(speed<0){
           if(!stop){
             if(location.y<2000)location.y+=10;
@@ -145,7 +152,8 @@ class Player{
     playerVertex.y = (location.z>0) ? floor(abs((player.getLocation().z%chunkSize)/scale)) : vertecies - floor(abs((player.getLocation().z%chunkSize)/scale));
     float terrainHeightAtPlayerLocation = 0;
     terrainHeightAtPlayerLocation = chunks[1][1].getVertex((int)playerVertex.x, (int)playerVertex.y).y - airplane.getHeight();
-    println(terrainHeightAtPlayerLocation);
+    //Triangle3D.closestPointOnSurface(Vec3D p)
+    //println(airplane.depth);
     if(player.getLocation().y > terrainHeightAtPlayerLocation){
       location.y -= 100;
       //collisionExplosion = new ParticleSystem(500, location.copy());
