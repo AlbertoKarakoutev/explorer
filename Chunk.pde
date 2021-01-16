@@ -12,7 +12,7 @@ class Chunk{
   public Chunk(PVector position){
     this.position = position.copy();
     water = new Water(position);
-    noiseDetail(20);
+    noiseDetail(40);
     noStroke();
     
     for(int z = 0; z <= vertecies; z++){
@@ -45,9 +45,12 @@ class Chunk{
   }
 
  
+ 
  float calculateHeight(float x, float z){
-    float noiseLevel = noise(x*3,z*3);
-    float value = map(noiseLevel, 0, 1, 2000, (-0.75)*chunkSize);
+    float noiseLevel = (float)simplexNoise.noise2(x*2,z*2);
+    float noiseDetail = noise(x*3,z*3);
+    float noiseMicro = noise(x*7, z*7);
+    float value = map(0.5*noiseLevel + 0.7*noiseDetail + 2*noiseMicro, -0.5, 1.2, 2000, (-0.75)*chunkSize);
     return value;
   }
   

@@ -7,6 +7,8 @@ int chunkNumber = 4;
 
 Player player;
 
+OpenSimplex2F simplexNoise;
+
 Chunk targetChunk;
 Chunk[][] chunks;
 
@@ -31,6 +33,8 @@ void settings(){
 void setup() {
   noiseSeed(123);
   
+  simplexNoise = new OpenSimplex2F(123);
+  
   loading = loadImage("loading.png");
   loading.resize(width,height);
   background(loading);
@@ -42,7 +46,7 @@ void setup() {
 
 void draw() {
   
-  loadingScreen();
+  optimise();
   
   float skyColor = map(player.getLocation().y, -3000, -30000, 255, 0);
   if(player.getLocation().y > -3000)skyColor = 255;
@@ -177,7 +181,7 @@ void updateChunks(){
 }
   
   
-void loadingScreen(){
+void optimise(){
   if(frameCount == 1){
     calculateChunks();  
     float initialTime = 1000;
