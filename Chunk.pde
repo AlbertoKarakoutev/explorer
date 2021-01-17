@@ -4,9 +4,12 @@ class Chunk{
   PVector position;
   Vec3D[][] vecs = new Vec3D[vertecies+1][vertecies+1];
   
-  PShape chunkShape = createShape();
-  PShape[] rows = new PShape[vertecies];
+  float birdsDraw;
+  float birdsProbability;
   
+  PShape chunkShape = createShape();
+  
+  Bird[] flock;
   Water water;
   
   public Chunk(PVector position){
@@ -14,6 +17,14 @@ class Chunk{
     water = new Water(position);
     noiseDetail(40);
     noStroke();
+    birdsDraw = random(1);
+    birdsProbability = 0.85;
+    if(birdsDraw>birdsProbability){
+      flock = new Bird[30];
+      for(int i = 0; i < flock.length; i++){
+        flock[i] = new Bird(this);
+      }
+    }
     
     for(int z = 0; z <= vertecies; z++){
       for(int x = 0; x <= vertecies; x++){
@@ -41,18 +52,17 @@ class Chunk{
       }
     }
     chunkShape.endShape(CLOSE);
-  
   }
-
- 
- 
- float calculateHeight(float x, float z){
+  
+  
+  float calculateHeight(float x, float z){
     float noiseLevel = (float)simplexNoise.noise2(x*2,z*2);
     float noiseDetail = noise(x*3,z*3);
     float noiseMicro = noise(x*7, z*7);
-    float value = map(0.5*noiseLevel + 0.7*noiseDetail + 2*noiseMicro, -0.5, 1.2, 2000, (-0.75)*chunkSize);
+    float value = map(noiseLevel + 0.7*noiseDetail + 2*noiseMicro, 0, 4.2, 2000, (-0.75)*chunkSize);
     return value;
   }
+  
   
   void display(){
     //Goal is < 0.02s
@@ -60,9 +70,22 @@ class Chunk{
     pushMatrix();
     translate(position.x, position.y, position.z);
     shape(chunkShape);
+    if(birdsDraw>birdsProbability)displayBirds();
     water.display();
     popMatrix();
     
+  }
+  
+  void displayBirds(){
+    for(int i = 0; i < flock.length; i++){
+      flock[i].acceleration.set(0, 0, 0);
+      flock[i].avoid();
+      flock[i].velocity.setMag(10);
+      flock[i].alignment(flock);
+      flock[i].cohesion(flock);
+      flock[i].separation(flock);
+      flock[i].display();
+    }
   }
   
   PVector getVertex(int x, int y){

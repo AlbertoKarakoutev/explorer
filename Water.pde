@@ -21,7 +21,7 @@ class Water{
       }
     }
     
-    fill(0, 150, 255, 200);
+    fill(0, 150, 255);
       
     for(int z = 0; z < wavePoints; z++){
       beginShape(TRIANGLE_STRIP);

@@ -15,24 +15,19 @@ Chunk[][] chunks;
 boolean stop = true;
 boolean maintainSpeed = false;
 
-static int vertecies = 200;
-static float chunkSize = 5000;
+static int vertecies = 80;
+static float chunkSize = 10000;
 static float scale = chunkSize/vertecies;
 
 PImage loading;
 
 void settings(){
- 
  fullScreen(P3D);
- smooth(8); 
- 
-  
+ smooth(8);  
 }
-
 
 void setup() {
   noiseSeed(123);
-  
   simplexNoise = new OpenSimplex2F(123);
   
   loading = loadImage("loading.png");
@@ -185,7 +180,7 @@ void optimise(){
   if(frameCount == 1){
     calculateChunks();  
     float initialTime = 1000;
-    while(initialTime > 20){
+    while(initialTime > 20 && vertecies > 30){
       float now = millis();
       updateChunks();
       initialTime = millis() - now;
