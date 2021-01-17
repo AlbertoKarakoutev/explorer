@@ -20,7 +20,7 @@ class Chunk{
     birdsDraw = random(1);
     birdsProbability = 0.85;
     if(birdsDraw>birdsProbability){
-      flock = new Bird[30];
+      flock = new Bird[15];
       for(int i = 0; i < flock.length; i++){
         flock[i] = new Bird(this);
       }

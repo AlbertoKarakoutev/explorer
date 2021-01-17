@@ -20,12 +20,12 @@ class Player{
     
       airplane = loadShape("Plane.obj");
       playerVertex = new PVector();
-      airplane.scale(1/viewFactor);
+      airplane.scale(4/viewFactor);
       cameraLocation = new PVector(0,0,0);
       location = new PVector(0, -3000, 0);
 
       PVector psLocation = location.copy();
-      psLocation.y +=5;
+      psLocation.y +=10;
       ps = new ParticleSystem(200, psLocation);
       
   }
@@ -107,7 +107,7 @@ class Player{
     PVector wind = cameraLocation.copy();
     PVector psLocation = location.copy();
     wind.y-=500;
-    psLocation.y +=5;
+    psLocation.y +=10;
     ps.run(psLocation);
     float ratio = (radius + speed)/radius;
     

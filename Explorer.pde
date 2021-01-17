@@ -16,7 +16,7 @@ boolean stop = true;
 boolean maintainSpeed = false;
 
 static int vertecies = 80;
-static float chunkSize = 10000;
+static float chunkSize = 5000;
 static float scale = chunkSize/vertecies;
 
 PImage loading;
@@ -180,7 +180,7 @@ void optimise(){
   if(frameCount == 1){
     calculateChunks();  
     float initialTime = 1000;
-    while(initialTime > 20 && vertecies > 30){
+    while(initialTime > 20 && vertecies > 20){
       float now = millis();
       updateChunks();
       initialTime = millis() - now;
