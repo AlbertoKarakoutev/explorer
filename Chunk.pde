@@ -18,9 +18,9 @@ class Chunk{
     noiseDetail(40);
     noStroke();
     birdsDraw = random(1);
-    birdsProbability = 0.85;
+    birdsProbability = 0.7;
     if(birdsDraw>birdsProbability){
-      flock = new Bird[15];
+      flock = new Bird[20];
       for(int i = 0; i < flock.length; i++){
         flock[i] = new Bird(this);
       }
@@ -59,7 +59,7 @@ class Chunk{
     float noiseLevel = (float)simplexNoise.noise2(x*2,z*2);
     float noiseDetail = noise(x*3,z*3);
     float noiseMicro = noise(x*7, z*7);
-    float value = map(noiseLevel + 0.7*noiseDetail + 2*noiseMicro, 0, 4.2, 2000, (-0.75)*chunkSize);
+    float value = map(noiseLevel + 0.7*noiseDetail + 2*noiseMicro, 0, 4.2, 1000, (-0.75)*chunkSize);
     return value;
   }
   

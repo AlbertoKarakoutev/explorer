@@ -4,7 +4,7 @@ class Bird{
   PVector velocity;
   PVector acceleration;
   
-  float maxForce = 0.5;
+  float maxForce = 1;
   float maxSpeed = 1;
   
   PShape bird;
@@ -12,7 +12,7 @@ class Bird{
   Chunk chunk;
   
   public Bird(Chunk chunk){
-    position = new PVector(random(chunkSize/2), random(-chunkSize/2, 0), random(chunkSize/2)); 
+    position = new PVector(random(chunkSize/2), random(-chunkSize/0.9, -chunkSize), random(chunkSize/2)); 
     velocity = PVector.random3D();
     velocity.setMag(random(20, 40));
     this.chunk = chunk;
@@ -24,69 +24,48 @@ class Bird{
   
   void display(){
     update();
-    
-    /*
-    Code for bird rotation:
-    
-    PVector heading = new PVector(position.x, position.z);
-    float sine = abs(position.x - velocity.x)/dist(velocity.x, velocity.z, position.x, position.z);
-    float mainAngle = asin(position.x/dist(heading.x, heading.y, 0, 0));
-    float angle = 180 - (mainAngle*(180/PI)+asin(sine));
-    rotateY(radians(angle));
-    
-    */
+
+    float theta = atan(velocity.z/velocity.x);
+    float fi = atan(velocity.y/velocity.x);
+    if(velocity.x>=0)theta += PI/2; fi += PI/2;
+    if(velocity.x<0)theta += PI*1.5; fi += PI*1.5;
     
     pushMatrix();
     translate(position.x, position.y, position.z);
-    shapeMode(CENTER);
-    fill(0);
+    rotateY(-theta);
+    //rotateX(-fi);
+    //bird.setFill(0);
     shape(bird);
     popMatrix();
   }
   
   
   void avoid() {
-    PVector bottom = new PVector(position.x, 0, position.z);
-    PVector top = new PVector(position.x, -chunkSize, position.z);
-    PVector left = new PVector(0, position.y, position.z);
-    PVector right = new PVector(chunkSize, position.y, position.z);
-    PVector front = new PVector(position.x, position.y, 0);
-    PVector back = new PVector(position.x, position.y, chunkSize);
     
     PVector steering = new PVector();
     
-    float db = dist(position.x, position.y, position.z, bottom.x, bottom.y, bottom.z);
-    float dt = dist(position.x, position.y, position.z, top.x, top.y, top.z);
-    float dl = dist(position.x, position.y, position.z, left.x, left.y, left.z);
-    float dr = dist(position.x, position.y, position.z, right.x,right.y, right.z);
-    float df = dist(position.x, position.y, position.z, front.x, front.y, front.z);
-    float dba = dist(position.x, position.y, position.z, back.x, back.y, back.z);
+    float db = dist(position.x, position.y, position.z, position.x, 0, position.z);
+    float dt = dist(position.x, position.y, position.z, position.x, -chunkSize, position.z);
+    float dl = dist(position.x, position.y, position.z, 0, position.y, position.z);
+    float dr = dist(position.x, position.y, position.z, chunkSize, position.y, position.z);
+    float df = dist(position.x, position.y, position.z, position.x, position.y, 0);
+    float dba = dist(position.x, position.y, position.z, position.x, position.y, chunkSize);
 
-    float minWallDistance = 100;
-    
-    if(db <= minWallDistance){
-      velocity.mult(-0.3);
-      position.y-=30;
-    }
-    if(dt <= minWallDistance){
-      velocity.mult(-0.3);
-      position.y+=30;
-    }
-    if(dl <= minWallDistance){
-      velocity.mult(-0.3);
-      position.x+=30;
-    }
-    if(dr <= minWallDistance){
-      velocity.mult(-0.3);
-      position.x-=30;
-    }
-    if(df <= minWallDistance){
-      velocity.mult(-0.3);
-      position.z+=30;
-    }
-    if(dba <= minWallDistance){
-      velocity.mult(-0.3);
-      position.z-=30;
+    float min = 100;
+ 
+    boolean headingForCollision = db<=min||dt<=min||dr<=min||dl<=min||df<=min||dba<=min;
+    if(headingForCollision){
+      float dist1 = min(db, dt, dl);
+      float dist2 = min(dr, df, dba);
+      float dist = min(dist1, dist2);
+      for(PVector ray : rays()){
+         //<>//
+        if(isInside(PVector.add(position, ray), min)){
+          ray.setMag(map(dist, 100, 0, 0, 3));
+          acceleration.add(ray);
+          break;
+        }
+      }
     }
 
     PVector birdVertex = new PVector();
@@ -95,9 +74,9 @@ class Bird{
     birdVertex.z = (position.z>0) ? round(abs((position.z%chunkSize)/scale)) : vertecies - round(abs((position.z%chunkSize)/scale));
     
     float terrainHeightAtBirdLocation = chunk.getVertex((int)birdVertex.x, (int)birdVertex.z).y;
-    if(position.y > terrainHeightAtBirdLocation - minWallDistance ){
-      position.y -= 30;
-      velocity.mult(-0.3);
+    if(position.y > terrainHeightAtBirdLocation - 200 ){
+      velocity.mult(-0.5);
+      position.y-=0.2;
     }
   }
   
@@ -119,7 +98,7 @@ class Bird{
       direction.setMag(maxSpeed*2);
       direction.limit(maxForce);
     }
-    acceleration.add(direction.mult(3));
+    acceleration.add(direction.mult(1));
   }
   
   
@@ -141,7 +120,7 @@ class Bird{
       direction.sub(position);
       direction.limit(maxForce);
     }
-    acceleration.add(direction.mult(3));
+    acceleration.add(direction.mult(1));
   }
   
   
@@ -164,12 +143,44 @@ class Bird{
       direction.sub(velocity);
       direction.limit(maxForce);
     }
-    acceleration.add(direction.mult(3));
+    acceleration.add(direction.mult(1));
   }
   
+  boolean isInside(PVector vector, float offset){
+    if(vector.x <= offset || vector.x >= chunkSize-offset)return false;
+    if(vector.y >= -offset || vector.y <= -chunkSize+offset)return false;
+    if(vector.z <= offset || vector.z >= chunkSize-offset)return false;
+    return true;
+  }
+    
+  PVector[] rays(){
+    
+    int numViewDirections = 25;
+    PVector[] directions = new PVector[numViewDirections];
+
+    float goldenRatio = (1 + sqrt(5)) / 2;
+    float angleIncrement = PI * 2 * goldenRatio;
+    
+    float mult = 210;
+    
+    for (int i = 0; i < numViewDirections; i++) {
+        float t = (float) i / numViewDirections;
+        float fi = acos (1 - 2 * t);
+        float theta = angleIncrement * i;
+
+        float x = sin (fi) * cos (theta);
+        float y = sin (fi) * sin (theta);
+        float z = cos (fi);
+        directions[i] = new PVector(x*mult, y*mult, z*mult);
+    }
+    return directions;
+  }
   
   void update(){
     float chance = random(1);
+    if(chance > 0.8){
+      //acceleration = PVector.random3
+    }
     velocity.limit(4);
     position.add(velocity);
     velocity.add(acceleration);

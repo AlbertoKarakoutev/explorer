@@ -3,7 +3,7 @@ PVector[] points = new PVector[10]; //<>//
 float offset = 0;
 float[] playerChunk = {1, 0};
 
-int chunkNumber = 4;
+int chunkNumber = 3;
 
 Player player;
 
@@ -15,14 +15,15 @@ Chunk[][] chunks;
 boolean stop = true;
 boolean maintainSpeed = false;
 
-static int vertecies = 80;
-static float chunkSize = 5000;
+static int vertecies = 100;
+static float chunkSize = 2000;
 static float scale = chunkSize/vertecies;
 
 PImage loading;
 
 void settings(){
- fullScreen(P3D);
+ //fullScreen(P3D, 1);
+ size(1000, 1000, P3D);
  smooth(8);  
 }
 
@@ -43,10 +44,10 @@ void draw() {
   
   optimise();
   
-  float skyColor = map(player.getLocation().y, -3000, -30000, 255, 0);
+  float skyColor = map(player.getLocation().y, -3000, -220000, 255, 0);
   if(player.getLocation().y > -3000)skyColor = 255;
   background(color(0, skyColor, skyColor));
-  perspective(map(player.getSpeed(), 0, player.getMaximumSpeed(), PI/2, PI/(1.9)), float(width)/float(height), (height/2) / tan((PI/3)/2)/10, 30000); 
+  perspective(map(player.getSpeed(), 0, player.getMaximumSpeed(), PI/2, PI/(1.9)), float(width)/float(height), (height/2) / tan((PI/3)/2)/10, 22000); 
   noStroke();
   
   
@@ -101,8 +102,8 @@ void calculateChunks(){
   for(int i = 0; i < chunks.length; i++){
     for(int j = 0; j < chunks[0].length; j++){
       PVector chunkPos = new PVector(0, 0, 0);
-      chunkPos.x = playerChunkCoordinates.x + (i-2)*chunkSize;
-      chunkPos.z = playerChunkCoordinates.z + (j-1)*chunkSize;
+      chunkPos.x = playerChunkCoordinates.x + (i-(1+floor(chunks.length/2)))*chunkSize;
+      chunkPos.z = playerChunkCoordinates.z + (j-floor(chunks.length/2))*chunkSize;
       chunks[i][j] = new Chunk(chunkPos);
     }
   }

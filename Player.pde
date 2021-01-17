@@ -152,9 +152,9 @@ class Player{
   
   
   void detectCollision(){
-    playerVertex.x = (location.x>0) ? floor(abs((player.getLocation().x%chunkSize)/scale)) : vertecies - floor(abs((player.getLocation().x%chunkSize)/scale));
-    playerVertex.z = (location.z>0) ? floor(abs((player.getLocation().z%chunkSize)/scale)) : vertecies - floor(abs((player.getLocation().z%chunkSize)/scale));
-    float terrainHeightAtPlayerLocation = chunks[1][1].getVertex((int)playerVertex.x, (int)playerVertex.z).y - airplane.getHeight();
+    playerVertex.x = (location.x>0) ? round(abs((player.getLocation().x%chunkSize)/scale)) : vertecies - round(abs((player.getLocation().x%chunkSize)/scale));
+    playerVertex.z = (location.z>0) ? round(abs((player.getLocation().z%chunkSize)/scale)) : vertecies - round(abs((player.getLocation().z%chunkSize)/scale));
+    float terrainHeightAtPlayerLocation = chunks[floor(chunks.length/2)][floor(chunks.length/2)].getVertex((int)playerVertex.x, (int)playerVertex.z).y - airplane.getHeight();
 
     if(player.getLocation().y > terrainHeightAtPlayerLocation){
       location.y -= 100;
@@ -162,8 +162,7 @@ class Player{
       stop = !stop;
     }
   }
-  
-  
+    
   float[] getChunk(){
     float[] chunkNum = new float[2];
     if(location.x>=0){
