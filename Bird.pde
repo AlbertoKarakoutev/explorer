@@ -7,8 +7,6 @@ class Bird{
   float maxForce = 1;
   float maxSpeed = 1;
   
-  PShape bird;
-  
   Chunk chunk;
   
   public Bird(Chunk chunk){
@@ -17,8 +15,7 @@ class Bird{
     velocity.setMag(random(20, 40));
     this.chunk = chunk;
     acceleration = new PVector();
-    bird = loadShape("Bird.obj");
-    bird.scale(0.3);
+    
   }
   
   

@@ -15,10 +15,11 @@ Chunk[][] chunks;
 boolean stop = true;
 boolean maintainSpeed = false;
 
-static int vertecies = 100;
-static float chunkSize = 2000;
+static int vertecies = 200;
+static float chunkSize = 10000;
 static float scale = chunkSize/vertecies;
 
+PShape bird;
 PImage loading;
 
 void settings(){
@@ -28,12 +29,17 @@ void settings(){
 }
 
 void setup() {
-  noiseSeed(123);
-  simplexNoise = new OpenSimplex2F(123);
+  noiseSeed(125);
+  
+  noiseDetail(6);
+  simplexNoise = new OpenSimplex2F(125);
   
   loading = loadImage("loading.png");
   loading.resize(width,height);
   background(loading);
+    
+  bird = loadShape("Bird.obj");
+  bird.scale(0.3);
     
   player = new Player();
   chunks = new Chunk[chunkNumber][chunkNumber];
@@ -114,66 +120,65 @@ void updateChunks(){
   playerChunkCoordinates.x = player.getChunk()[0]*chunkSize;
   playerChunkCoordinates.y = 0;
   playerChunkCoordinates.z = player.getChunk()[1]*chunkSize;
-  String movementDirection = "";
+  String movementDirection = "west";
   if(playerChunk[0] < player.getChunk()[0])movementDirection = "west";
   if(playerChunk[0] > player.getChunk()[0])movementDirection = "east";
   if(playerChunk[1] < player.getChunk()[1])movementDirection = "south";
   if(playerChunk[1] > player.getChunk()[1])movementDirection = "north";
-  if(movementDirection.equals(""))movementDirection = "north";
-      switch(movementDirection){
-        
-        case "west":
-          for(int i = 1; i < chunks.length; i++){
-            for(int j = 0; j < chunks[0].length; j++){
-               chunks[i-1][j] = chunks[i][j]; 
-            }
-          }
-          for(int i = 0; i < chunks.length; i++){
-            PVector chunkPos = new PVector(0, 0, 0);
-            chunkPos.x = playerChunkCoordinates.x + (chunks.length-3)*chunkSize;
-            chunkPos.z = playerChunkCoordinates.z + (i-1)*chunkSize;
-            chunks[chunks.length-1][i] = new Chunk(chunkPos);
-          }
-          break;
-          
-        case "east":
-          for(int i = chunks.length-2; i >= 0; i--){
-            for(int j = 0; j < chunks[0].length; j++){
-               chunks[i+1][j] = chunks[i][j]; 
-            }
-          }
-          for(int j = 0; j < chunks.length; j++){
-            PVector chunkPos = new PVector(0, 0, 0);
-            chunkPos.x = playerChunkCoordinates.x - 2*chunkSize;
-            chunkPos.z = playerChunkCoordinates.z + (j-1)*chunkSize;
-            chunks[0][j] = new Chunk(chunkPos);
-          }
-          break;
-        case "south":
-          for(int i = 0; i < chunks.length; i++){
-            for(int j = 1; j < chunks[0].length; j++){
-               chunks[i][j-1] = chunks[i][j]; 
-            }
-            PVector chunkPos = new PVector(0, 0, 0);
-            chunkPos.x = playerChunkCoordinates.x + (i-2)*chunkSize;
-            chunkPos.z = playerChunkCoordinates.z + (chunks.length-2)*chunkSize;
-            chunks[i][chunks.length-1] = new Chunk(chunkPos);
-          }
-          break;
-          
-        case "north":
-          for(int i = 0; i < chunks.length; i++){
-            for(int j = chunks.length-2; j >= 0; j--){
-               chunks[i][j+1] = chunks[i][j]; 
-            }
-            PVector chunkPos = new PVector(0, 0, 0);
-            chunkPos.x = playerChunkCoordinates.x + (i-2)*chunkSize;
-            chunkPos.z = playerChunkCoordinates.z - chunkSize;
-            chunks[i][0] = new Chunk(chunkPos);
-          }
-          break;
+  PVector chunkPos = new PVector(0, 0, 0);
+  Chunk[][] newChunks = new Chunk[chunks.length][chunks.length];
+  switch(movementDirection){
+    
+    case "west":
+      for(int i = 1; i < chunks.length; i++){
+        for(int j = 0; j < chunks[0].length; j++){
+           chunks[i-1][j] = chunks[i][j]; 
+           if(i == chunks.length-1){
+             
+             chunkPos.x = playerChunkCoordinates.x + (i-2)*chunkSize;
+             chunkPos.z = playerChunkCoordinates.z + (j-1)*chunkSize;
+             chunks[i][j] = new Chunk(chunkPos);
+           }
+        }
       }
-  
+      break;
+      
+    case "east":
+      for(int i = chunks.length-2; i >= 0; i--){
+        
+        for(int j = 0; j < chunks[0].length; j++){
+           chunks[i+1][j] = chunks[i][j]; 
+           if(i == 0){
+             chunkPos.x = playerChunkCoordinates.x - 2*chunkSize;
+             chunkPos.z = playerChunkCoordinates.z + (j-1)*chunkSize;
+             chunks[i][j] = new Chunk(chunkPos);
+           }
+        }
+      }
+      break;
+      
+    case "south":
+      for(int i = 0; i < chunks.length; i++){
+        for(int j = 1; j < chunks[0].length; j++){
+           chunks[i][j-1] = chunks[i][j]; 
+        }
+        chunkPos.x = playerChunkCoordinates.x + (i-2)*chunkSize;
+        chunkPos.z = playerChunkCoordinates.z + (chunks.length-2)*chunkSize;
+        chunks[i][chunks.length-1] = new Chunk(chunkPos);
+      }
+      break;
+      
+    case "north":
+      for(int i = 0; i < chunks.length; i++){
+        for(int j = chunks.length-2; j >= 0; j--){
+           chunks[i][j+1] = chunks[i][j]; 
+        }
+        chunkPos.x = playerChunkCoordinates.x + (i-2)*chunkSize;
+        chunkPos.z = playerChunkCoordinates.z - chunkSize;
+        chunks[i][0] = new Chunk(chunkPos);
+      }
+      break;
+  } 
 }
   
   

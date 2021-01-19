@@ -75,7 +75,7 @@ public class OpenSimplex2F {
    * 2D Simplex noise base.
    * Lookup table implementation inspired by DigitalShadow.
    */
-  private double noise2_Base(double xs, double ys) {
+  public double noise2_Base(double xs, double ys) {
     double value = 0;
     
     // Get base points and offsets
