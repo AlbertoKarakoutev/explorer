@@ -7,7 +7,7 @@ class Chunk{
   float birdsDraw;
   float birdsProbability;
   
-  float chunkMin = 1000;
+  float chunkMin = 1500;
   float chunkMax = -chunkSize;
   
   PShape chunkShape = createShape();
@@ -30,6 +30,7 @@ class Chunk{
     for(int z = 0; z <= vertecies; z++){
       for(int x = 0; x <= vertecies; x++){
         float currentHeight = calculateHeight((position.x + x*scale)/(chunkSize*3), (position.z + z*scale)/(chunkSize*3));
+        //float currentHeight=0;
         vecs[x][z] = new Vec3D(x*scale, currentHeight, z*scale);
         }
     }
@@ -79,7 +80,7 @@ class Chunk{
     if(birdsDraw>birdsProbability)displayBirds();
     
     water = new Water(position);
-    water.display();
+    //water.display();
     popMatrix();
     
   }

@@ -4,7 +4,7 @@ class Bird{
   PVector velocity;
   PVector acceleration;
   
-  float maxForce = 1;
+  float maxForce = 0.5;
   float maxSpeed = 1;
   
   Chunk chunk;

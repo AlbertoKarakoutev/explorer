@@ -1,4 +1,6 @@
-PVector[] points = new PVector[10]; //<>//
+import processing.sound.*; //<>// //<>//
+
+PVector[] points = new PVector[10];
 
 float offset = 0;
 float[] playerChunk = {1, 0};
@@ -22,6 +24,8 @@ static float scale = chunkSize/vertecies;
 PShape bird;
 PImage loading;
 
+SoundFile windSound;
+
 void settings(){
  //fullScreen(P3D, 1);
  size(1000, 1000, P3D);
@@ -29,11 +33,9 @@ void settings(){
 }
 
 void setup() {
-  noiseSeed(125);
-  
+  noiseSeed(100);
   noiseDetail(6);
-  simplexNoise = new OpenSimplex2F(125);
-  
+  simplexNoise = new OpenSimplex2F(100);
   loading = loadImage("loading.png");
   loading.resize(width,height);
   background(loading);
@@ -43,7 +45,8 @@ void setup() {
     
   player = new Player();
   chunks = new Chunk[chunkNumber][chunkNumber];
-   //<>//
+  
+  windSound = new SoundFile(this, "wind.mp3");
 }
 
 void draw() {
@@ -53,7 +56,7 @@ void draw() {
   float skyColor = map(player.getLocation().y, -3000, -220000, 255, 0);
   if(player.getLocation().y > -3000)skyColor = 255;
   background(color(0, skyColor, skyColor));
-  perspective(map(player.getSpeed(), 0, player.getMaximumSpeed(), PI/2, PI/(1.9)), float(width)/float(height), (height/2) / tan((PI/3)/2)/10, 22000); 
+  perspective(map(player.getSpeed(), 0, 50, PI/2, PI/(1.9)), float(width)/float(height), (height/2) / tan((PI/3)/2)/10, 22000); 
   noStroke();
   
   
