@@ -56,7 +56,7 @@ class Bird{
       float dist2 = min(dr, df, dba);
       float dist = min(dist1, dist2);
       for(PVector ray : rays()){
-         //<>//
+        
         if(isInside(PVector.add(position, ray), min)){
           ray.setMag(map(dist, 100, 0, 0, 3));
           acceleration.add(ray);

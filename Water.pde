@@ -22,7 +22,8 @@ class Water{
       }
     }
     
-    fill(0, 150, 255);
+    pushStyle();
+    fill(0, 150, 255, 200);
       
     for(int z = 0; z < wavePoints; z++){
       beginShape(TRIANGLE_STRIP);
@@ -32,6 +33,7 @@ class Water{
       }
       endShape();
     }
+    popStyle();
   }
   
   float getHeight(float x, float y){
