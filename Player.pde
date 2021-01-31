@@ -22,7 +22,7 @@ class Player{
       playerVertex = new PVector();
       airplane.scale(4/viewFactor);
       cameraLocation = new PVector(0,0,0);
-      location = new PVector(0, -3000, 0);
+      location = new PVector(0, -10000, 0);
 
       PVector psLocation = location.copy();
       psLocation.y +=10;
@@ -104,15 +104,76 @@ class Player{
 
 
   void move(){
-    detectCollision();
+    boolean collided = detectCollision();
+    movementEffects();
+    
+    float ratio = (radius + speed)/radius;
+    
+    
+    if(keyPressed){
+      
+      if (key == 'w') {
+        if(speed < speedMaximum)speed+=(speedMaximum/4)/frameRate; 
+      }
+      
+      if (keyCode == SHIFT) {
+        speedMaximum += 1;
+      }
+      
+      if(key == 'r'){
+        location = new PVector(0, -5000, 0);
+        calculateChunks();
+      }
+      
+    }else{
+      if(!stop){
+        rotateFI(map(speed/speedMaximum, 1, 0, 0, 5)/500);
+        if(speed > 0){
+          if(!maintainSpeed)speed-=(speedMaximum/10)/frameRate; 
+          if(speed >= 0)location.y+=map(speed/speedMaximum, 1, 0, 0, speedMaximum);
+        }else if(speed<0){
+          if(!collided){
+            location.y+=10;
+          }
+        }
+      }
+    }
+    
+    if(!collided){
+      location.y = (1-ratio)*cameraLocation.y + ratio*location.y;
+    }
+    location.x = (1-ratio)*cameraLocation.x + ratio*location.x;
+    location.z = (1-ratio)*cameraLocation.z + ratio*location.z;
+    
+  }
+  
+  
+  boolean detectCollision(){
+    PVector relativeLocation = new PVector((location.x%chunkSize)%scale, (location.z%chunkSize)%scale);
+    playerVertex.x = (location.x>0) ? round(abs((location.x%chunkSize)/scale)) : vertecies - round(abs((location.x%chunkSize)/scale));
+    playerVertex.z = (location.z>0) ? round(abs((location.z%chunkSize)/scale)) : vertecies - round(abs((location.z%chunkSize)/scale));
+    float terrainHeightAtPlayerLocation;
+    if(updatingChunks){
+      terrainHeightAtPlayerLocation = newChunks[floor(chunks.length/2)][floor(chunks.length/2)].getVertex((int)playerVertex.x, (int)playerVertex.z).y - airplane.getHeight()/2;
+    }else{
+      terrainHeightAtPlayerLocation = chunks[floor(chunks.length/2)][floor(chunks.length/2)].getVertex((int)playerVertex.x, (int)playerVertex.z).y - airplane.getHeight()/2;
+    }
+    if(location.y > terrainHeightAtPlayerLocation){
+      location.y = lerp(location.y, terrainHeightAtPlayerLocation, 0.3);
+      return true;
+    }
+    return false;
+  }
+    
+  void movementEffects(){
     
     PVector wind = cameraLocation.copy();
     PVector psLocation = location.copy();
-    wind.y-=500;
+    
     psLocation.y +=10;
     ps.run(psLocation);
-    float ratio = (radius + speed)/radius;
     
+    wind.y-=500;
     if(speed>0){
       windSound.amp(map(speed, 0, speedMaximum, 0, 0.1));
       if(!windSound.isPlaying()){
@@ -122,59 +183,16 @@ class Player{
       windSound.stop();
     }
     if(stop)windSound.stop();
+    
     if(keyPressed){
-      if(speed < speedMaximum)speed+=(speedMaximum/4)/frameRate; 
       if (key == 'w') {
-        location.x = (1-ratio)*cameraLocation.x + ratio*location.x;
-        location.y = (1-ratio)*cameraLocation.y + ratio*location.y;
-        location.z = (1-ratio)*cameraLocation.z + ratio*location.z;
-       
         wind.y += 1000;
+          
         ps.applyForce(wind.sub(location).div(10000));
         for (int i = 0; i < 10; i++) {
           ps.addParticle();
         }
       }
-      if (keyCode == SHIFT) {
-        speedMaximum += 0.2;
-      }
-      if(key == 'r'){
-        location = new PVector(0, -5000, 0);
-        calculateChunks();
-      }
-    }else{
-      if(!stop){
-        rotateFI(map(speed/speedMaximum, 1, 0, 0, 5)/500);
-        if(speed > 0){
-          if(!maintainSpeed)speed-=(speedMaximum/10)/frameRate; 
-          if(speed >= 0)location.y+=map(speed/speedMaximum, 1, 0, 0, speedMaximum);
-        }else if(speed<0){
-          if(!stop){
-            if(location.y<2000)location.y+=10;
-          }
-        }
-      
-        location.x = (1-ratio)*cameraLocation.x + ratio*location.x;
-        location.y = (1-ratio)*cameraLocation.y + ratio*location.y;
-        location.z = (1-ratio)*cameraLocation.z + ratio*location.z;
-      }
-    }
-  }
-  
-  
-  void detectCollision(){
-    playerVertex.x = (location.x>0) ? round(abs((player.getLocation().x%chunkSize)/scale)) : vertecies - round(abs((player.getLocation().x%chunkSize)/scale));
-    playerVertex.z = (location.z>0) ? round(abs((player.getLocation().z%chunkSize)/scale)) : vertecies - round(abs((player.getLocation().z%chunkSize)/scale));
-    float terrainHeightAtPlayerLocation;
-    if(updatingChunks){
-      terrainHeightAtPlayerLocation = newChunks[floor(chunks.length/2)][floor(chunks.length/2)].getVertex((int)playerVertex.x, (int)playerVertex.z).y - airplane.getHeight()/2;
-    }else{
-      terrainHeightAtPlayerLocation = chunks[floor(chunks.length/2)][floor(chunks.length/2)].getVertex((int)playerVertex.x, (int)playerVertex.z).y - airplane.getHeight()/2;
-    }
-    if(player.getLocation().y > terrainHeightAtPlayerLocation){
-      location.y -= 100;
-      //collisionExplosion = new ParticleSystem(500, location.copy());
-      stop = !stop;
     }
   }
     

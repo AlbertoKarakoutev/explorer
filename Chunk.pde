@@ -2,18 +2,23 @@ import toxi.geom.*;
 
 class Chunk{
   PVector position;
-  Vec3D[][] vecs = new Vec3D[vertecies+1][vertecies+1];
+  PVector[][] vecs = new PVector[vertecies+1][vertecies+1];
   
   float birdsDraw;
   float birdsProbability;
   
-  float chunkMin = 1500;
-  float chunkMax = -chunkSize;
+  final float CHUNK_MIN = chunkSize/4;
+  final float SEA_LEVEL = 0;
+  final float SAND_LEVEL = -chunkSize/20;
+  final float MOUNTAIN_ROCKS = -chunkSize/1.4;
+  final float CHUNK_MAX = -chunkSize;
   
-  PShape chunkShape = createShape();
+  PShape chunkShape = createShape(GROUP);
   
+  PShape sandShape = createShape();
+  PShape grassShape = createShape();
+  PShape rockShape = createShape();
   Bird[] flock;
-  Water water;
   
   public Chunk(PVector position){
     this.position = position.copy();
@@ -28,58 +33,95 @@ class Chunk{
     
     for(int z = 0; z <= vertecies; z++){
       for(int x = 0; x <= vertecies; x++){
-        float currentHeight = calculateHeight((position.x + x*scale)/(chunkSize*3), (position.z + z*scale)/(chunkSize*3));
-        vecs[x][z] = new Vec3D(x*scale, currentHeight, z*scale);
+        float currentHeight = calculateHeight((this.position.x + x*scale)/(chunkSize*3), (this.position.z + z*scale)/(chunkSize*3));
+        vecs[x][z] = new PVector(x*scale, currentHeight, z*scale);
       }
     }
     
-    chunkShape.beginShape(QUADS);
-    chunkShape.noStroke();
+    sandShape.setTexture(sand);
+    grassShape.setTexture(grass);
+    rockShape.setTexture(rock);
+    
+    textureWrap(REPEAT);
+    textureMode(NORMAL);
+    //chunkShape.noStroke();
+    sandShape.beginShape(QUADS);
+    grassShape.beginShape(QUADS);
+    rockShape.beginShape(QUADS);
      for(int z = 0; z < vertecies; z++){
       for(int x = 0; x < vertecies; x++){
-        chunkShape.fill(applyColor(vecs[x][z].y));
-        //normal(0, 1, 0);
-        chunkShape.vertex(vecs[x][z].x, vecs[x][z].y, vecs[x][z].z);
-        chunkShape.vertex(vecs[x+1][z].x, vecs[x+1][z].y, vecs[x+1][z].z);
-        chunkShape.vertex(vecs[x+1][z+1].x, vecs[x+1][z+1].y, vecs[x+1][z+1].z);
-        chunkShape.vertex(vecs[x][z+1].x, vecs[x][z+1].y, vecs[x][z+1].z);
+        //chunkShape.fill(applyColor(vecs[x][z].y));
         
-        //chunkShape.vertex(vecs[x+1][z].x, vecs[x+1][z].y, vecs[x+1][z].z);
-        //chunkShape.vertex(vecs[x][z+1].x, vecs[x][z+1].y, vecs[x][z+1].z);
-        //chunkShape.vertex(vecs[x+1][z+1].x, vecs[x+1][z+1].y, vecs[x+1][z+1].z);
+        addSurface(x, z);
         
       }
     }
-    chunkShape.endShape(CLOSE); 
+    sandShape.endShape();
+    grassShape.endShape();
+    rockShape.endShape();
+    
+    chunkShape.addChild(sandShape);
+    chunkShape.addChild(grassShape);
+    chunkShape.addChild(rockShape);
     
 }
-  
+
+  void addSurface(int x, int z){
+    PShape thisShape = null;
+    
+    //PVector thisVector = vecs[x][z];
+    
+    PVector n = PVector.sub(vecs[x][z], vecs[x+1][z], null).cross(PVector.sub(vecs[x][z+1], vecs[x+1][z], null));
+    n.normalize();
+    
+    if(vecs[x][z].y >= SAND_LEVEL)thisShape = sandShape;
+    if(vecs[x][z].y < SAND_LEVEL)thisShape = grassShape;
+    if(vecs[x][z].y < MOUNTAIN_ROCKS)thisShape = rockShape;
+    
+    float textureScale = chunkSize/30;
+    
+    thisShape.noStroke();
+    
+    thisShape.normal(n.x, -1, n.z);
+    
+    thisShape.vertex(vecs[x][z].x, vecs[x][z].y, vecs[x][z].z, (x*scale)/textureScale, (z*scale)/textureScale);
+    thisShape.vertex(vecs[x+1][z].x, vecs[x+1][z].y, vecs[x+1][z].z, ((x+1)*scale)/textureScale, (z*scale)/textureScale);
+    thisShape.vertex(vecs[x+1][z+1].x, vecs[x+1][z+1].y, vecs[x+1][z+1].z, ((x+1)*scale)/textureScale, ((z+1)*scale)/textureScale);
+    thisShape.vertex(vecs[x][z+1].x, vecs[x][z+1].y, vecs[x][z+1].z, (x*scale)/textureScale, ((z+1)*scale)/textureScale);
+    
+  }
+
   int applyColor(float y){
-    if(y >= -150){
+    if(y >= SEA_LEVEL){
       return color(214, 175, 15);
     }
-    if(y < -150 && y > -4000){
-      color c1 = color(145, 145, 145);
+    if(y < SEA_LEVEL && y > SAND_LEVEL){
+      color c1 = color(214, 175, 15);
       color c2 = color(31, 97, 16);
-      return lerpColor(c2, c1, map(y, -150, -4000, 0, 1));
+      return lerpColor(c1, c2, map(y, SEA_LEVEL, SAND_LEVEL, 0, 1));
       
     }
-    if(y < -4000 && y > -5000){
+    if(y < SAND_LEVEL && y > MOUNTAIN_ROCKS){
+      color c1 = color(255, 255, 255);
+      color c2 = color(31, 97, 16);
+      return lerpColor(c2, c1, map(y, SAND_LEVEL, MOUNTAIN_ROCKS, 0, 1));
+      
+    }
+    if(y < MOUNTAIN_ROCKS){
       color c1 = color(255);
       color c2 = color(145, 145, 145);
-      return lerpColor(c1, c2, map(y, -5000, -4000, 0, 1));
-    }
-    if(y < -5000){
-      return color(255);
+      return lerpColor(c1, c2, map(y, MOUNTAIN_ROCKS, CHUNK_MAX, 0, 1));
     }
     return 0;
   }
   
+  
   float calculateHeight(float x, float z){
     float noiseLevel = (float)simplexNoise.noise2(x*2,z*2);
-    float detail = map(noiseLevel, -1, 1, 0.3, 7);
-    float noiseDetail = noise(x*detail, z*detail);//*3
-    float value = map(noiseLevel + 0.7*noiseDetail, -1, 1.5, chunkMin, chunkMax);
+    float noiseDetail = noise(x*25,z*25);//*3
+    float detailMultiplier = (noiseLevel<=-0.5) ? 0.1 : map(noiseLevel, -0.5, 1, 0.1, 1);
+    float heightMultiplier = map(noiseLevel, -1, 1, 0, 1.2);
+    float value = map(noiseLevel + noiseDetail*detailMultiplier, -1, 2, CHUNK_MIN, CHUNK_MAX) * heightMultiplier;
     return value;
   }
   
@@ -90,10 +132,7 @@ class Chunk{
     pushMatrix();
     translate(position.x, position.y, position.z);
     shape(chunkShape);
-    if(birdsDraw>birdsProbability)displayBirds();
-    
-    water = new Water(position);
-    water.display();
+    if(birdsDraw>birdsProbability)displayBirds();  
     popMatrix();
     
   }
