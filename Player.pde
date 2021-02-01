@@ -114,6 +114,7 @@ class Player{
       
       if (key == 'w') {
         if(speed < speedMaximum)speed+=(speedMaximum/4)/frameRate; 
+        
       }
       
       if (keyCode == SHIFT) {
@@ -122,7 +123,7 @@ class Player{
       
       if(key == 'r'){
         location = new PVector(0, -5000, 0);
-        calculateChunks();
+        initialCalculations();
       }
       
     }else{
@@ -138,13 +139,13 @@ class Player{
         }
       }
     }
-    
-    if(!collided){
-      location.y = (1-ratio)*cameraLocation.y + ratio*location.y;
+    if(!stop){
+      if(!collided){
+        location.y = (1-ratio)*cameraLocation.y + ratio*location.y;
+      }
+      location.x = (1-ratio)*cameraLocation.x + ratio*location.x;
+      location.z = (1-ratio)*cameraLocation.z + ratio*location.z;
     }
-    location.x = (1-ratio)*cameraLocation.x + ratio*location.x;
-    location.z = (1-ratio)*cameraLocation.z + ratio*location.z;
-    
   }
   
   

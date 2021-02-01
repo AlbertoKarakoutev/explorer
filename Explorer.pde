@@ -1,6 +1,8 @@
 import processing.sound.*;
 
 PVector[] points = new PVector[10];
+PVector sunLocation;
+PVector sunLocationNormal;
 
 float offset = 0;
 float[] playerChunk = {1, 0};
@@ -23,15 +25,15 @@ boolean updatingChunks = false;
 static int vertecies = 300;
 static float chunkSize = 40000;
 static float scale = chunkSize/vertecies;
+static final int textureSize = 200;
 
 PShape bird;
 PImage loading;
 PImage grass;
 PImage rock;
+PImage snow;
 PImage sand;
 PImage sea;
-
-PShader landscape;
 
 SoundFile windSound;
 SoundFile soundtrack;
@@ -57,12 +59,14 @@ void setup() {
   
   grass = loadImage("images/grass.jpg");
   rock = loadImage("images/rock.jpg");
+  snow = loadImage("images/snow.jpg");
   sand = loadImage("images/sand.jpg");
   sea = loadImage("images/sea.jpg");
-  grass.resize(200, 200);
-  rock.resize(200, 200);
-  sand.resize(200, 200);
-  sea.resize(200, 200);
+  grass.resize(textureSize, textureSize);
+  rock.resize(textureSize, textureSize);
+  snow.resize(textureSize, textureSize);
+  sand.resize(textureSize, textureSize);
+  sea.resize(textureSize, textureSize);
     
   bird = loadShape("models/Bird.obj");
   bird.scale(0.3);
@@ -71,8 +75,8 @@ void setup() {
   chunks = new Chunk[chunkNumber][chunkNumber];
   newChunks = new Chunk[chunkNumber][chunkNumber];
   
-  landscape = loadShader("landscape.glsl");
-  landscape.set("resolution", float(width), float(height));  
+  sunLocation = new PVector(500000, -1000000, 0);
+  sunLocationNormal = sunLocation.copy().normalize();
   
   initialCalculations();
   
@@ -86,7 +90,7 @@ void draw() {
   
   //optimise();
   background(168, 231, 252);
-  perspective(map(player.getSpeed(), 0, player.getMaximumSpeed(), PI/2, PI/(1.98)), float(width)/float(height), (height/2) / tan((PI/3)/2)/10, chunkSize*2); 
+  perspective(map(player.getSpeed(), 0, player.getMaximumSpeed(), PI/2, PI/(1.98)), float(width)/float(height), (height/2) / tan((PI/3)/2)/10, chunkSize*100); 
   noStroke();
   
   if((int)playerChunk[0] != (int)player.getChunk()[0] || (int)playerChunk[1] != (int)player.getChunk()[1]){
@@ -98,10 +102,16 @@ void draw() {
   playerChunk = player.getChunk();
   player.update();
   
-  shininess(50);
-  lightSpecular(1, 1, 1);
+  push();
+  translate(sunLocation.x, sunLocation.y, sunLocation.z);
+  fill(248, 252, 217);
+  emissive(248, 252, 217);
+  sphere(100000);
+  pop();
+  
+  lightSpecular(248, 252, 217);
   //pointLight(215, 217, 184, player.getLocation().x, -2000, player.getLocation().z);
-  directionalLight(215, 217, 184, 0, 1, 0.5);
+  directionalLight(248, 252, 217, sunLocationNormal.x, -sunLocationNormal.y, sunLocationNormal.z);
   
   if(!updatingChunks){ 
     for(int i = 0; i < chunks.length; i++){
@@ -245,15 +255,15 @@ void optimise(){
   }
 }
   
-void mouseWheel(MouseEvent event){
-  if(event.getCount()<0){
-    vertecies+=10;
-  }else{
-    if(vertecies-10>0)vertecies-=10;
-  }
-  println("Vertecies: " + vertecies);
-  calculateChunks();
-}
+//void mouseWheel(MouseEvent event){
+//  if(event.getCount()<0){
+//    vertecies+=10;
+//  }else{
+//    if(vertecies-10>0)vertecies-=10;
+//  }
+//  println("Vertecies: " + vertecies);
+//  calculateChunks();
+//}
 
 void keyPressed(){
   if(keyCode == ENTER){
