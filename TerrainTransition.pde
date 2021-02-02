@@ -59,7 +59,7 @@ class TerrainTransition{
             PVector n = PVector.sub(points[x][z], points[x+1][z], null).cross(PVector.sub(points[x][z+1], points[x+1][z], null));
             n.normalize();
             
-            float textureScale = chunkSize/30;
+            float textureScale = chunkSize/100;
             
             levels[i].normal(n.x, -n.y, n.z);
             levels[i].noStroke();

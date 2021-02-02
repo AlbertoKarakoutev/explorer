@@ -15,7 +15,6 @@ OpenSimplex2F simplexNoise;
 
 Chunk targetChunk;
 Chunk[][] chunks;
-Chunk[][] newChunks;
 ChunkThread thread;
 
 boolean stop = true;
@@ -73,7 +72,6 @@ void setup() {
     
   player = new Player();
   chunks = new Chunk[chunkNumber][chunkNumber];
-  newChunks = new Chunk[chunkNumber][chunkNumber];
   
   sunLocation = new PVector(500000, -1000000, 0);
   sunLocationNormal = sunLocation.copy().normalize();
@@ -113,22 +111,15 @@ void draw() {
   //pointLight(215, 217, 184, player.getLocation().x, -2000, player.getLocation().z);
   directionalLight(248, 252, 217, sunLocationNormal.x, -sunLocationNormal.y, sunLocationNormal.z);
   
-  if(!updatingChunks){ 
-    for(int i = 0; i < chunks.length; i++){
-      for(int j = 0; j < chunks[0].length; j++){
-        newChunks[i][j].display();
-      }
-    }
-  }else{
-    for(int i = 0; i < chunks.length; i++){
-      for(int j = 0; j < chunks[0].length; j++){
-        chunks[i][j].display();
-      }
+  
+  for(int i = 0; i < chunks.length; i++){
+    for(int j = 0; j < chunks[0].length; j++){
+      chunks[i][j].display();
     }
   }
   
-  new Water(newChunks[0][0].getPosition()).display();
-  //new Cloud(newChunks[0][0].getPosition()).display();
+  
+  //new Water(newChunks[0][0].getPosition()).display();
 }
 
 void initialCalculations(){
@@ -142,22 +133,21 @@ void initialCalculations(){
       PVector chunkPos = new PVector(0, 0, 0);
       chunkPos.x = playerChunkCoordinates.x + (i-(1+floor(chunks.length/2)))*chunkSize;
       chunkPos.z = playerChunkCoordinates.z + (j-floor(chunks.length/2))*chunkSize;
-      newChunks[i][j] = new Chunk(chunkPos);
       chunks[i][j] = new Chunk(chunkPos);
     }
   }
 }
 
-void calculateChunks(){
-  scale = chunkSize/vertecies;
-  PVector playerChunkCoordinates = new PVector();
-  playerChunkCoordinates.x = player.getChunk()[0]*chunkSize;
-  playerChunkCoordinates.y = 0;
-  playerChunkCoordinates.z = player.getChunk()[1]*chunkSize;
+//void calculateChunks(){
+//  scale = chunkSize/vertecies;
+//  PVector playerChunkCoordinates = new PVector();
+//  playerChunkCoordinates.x = player.getChunk()[0]*chunkSize;
+//  playerChunkCoordinates.y = 0;
+//  playerChunkCoordinates.z = player.getChunk()[1]*chunkSize;
   
-  thread = new ChunkThread(playerChunkCoordinates); //<>//
-  thread.start();
-}
+//  thread = new ChunkThread(playerChunkCoordinates); //<>//
+//  thread.start();
+//}
 
 
 void updateChunks(){
@@ -172,32 +162,39 @@ void updateChunks(){
   if(playerChunk[0] > player.getChunk()[0])movementDirection = "east";
   if(playerChunk[1] < player.getChunk()[1])movementDirection = "south";
   if(playerChunk[1] > player.getChunk()[1])movementDirection = "north";
-  PVector chunkPos = new PVector(0, 0, 0);
+  
+  ChunkThread[] threads = new ChunkThread[chunkNumber];
+  
   switch(movementDirection){
     
     case "west":
       for(int i = 1; i < chunks.length; i++){
         for(int j = 0; j < chunks[0].length; j++){
-           newChunks[i-1][j] = chunks[i][j]; 
+           chunks[i-1][j] = chunks[i][j]; 
            if(i == chunks.length-1){
-             
+             PVector chunkPos = new PVector();
              chunkPos.x = playerChunkCoordinates.x + (i-2)*chunkSize;
              chunkPos.z = playerChunkCoordinates.z + (j-1)*chunkSize;
-             newChunks[i][j] = new Chunk(chunkPos);
+             
+             threads[j] = new ChunkThread(chunkPos, i, j);
+             threads[j].start();
            }
         }
       }
+      
       break;
       
     case "east":
       for(int i = chunks.length-2; i >= 0; i--){
-        
         for(int j = 0; j < chunks[0].length; j++){
-           newChunks[i+1][j] = chunks[i][j]; 
+           chunks[i+1][j] = chunks[i][j]; 
            if(i == 0){
+             PVector chunkPos = new PVector();
              chunkPos.x = playerChunkCoordinates.x - 2*chunkSize;
              chunkPos.z = playerChunkCoordinates.z + (j-1)*chunkSize;
-             newChunks[i][j] = new Chunk(chunkPos);
+             
+             threads[j] = new ChunkThread(chunkPos, i, j);
+             threads[j].start();
            }
         }
       }
@@ -206,54 +203,44 @@ void updateChunks(){
     case "south":
       for(int i = 0; i < chunks.length; i++){
         for(int j = 1; j < chunks[0].length; j++){
-           newChunks[i][j-1] = chunks[i][j]; 
+           chunks[i][j-1] = chunks[i][j]; 
         }
+        PVector chunkPos = new PVector();
         chunkPos.x = playerChunkCoordinates.x + (i-2)*chunkSize;
         chunkPos.z = playerChunkCoordinates.z + (chunks.length-2)*chunkSize;
-        newChunks[i][chunks.length-1] = new Chunk(chunkPos);
+        
+        threads[i] = new ChunkThread(chunkPos, i, chunks.length-1);
+        threads[i].start();
       }
       break;
       
     case "north":
       for(int i = 0; i < chunks.length; i++){
         for(int j = chunks.length-2; j >= 0; j--){
-           newChunks[i][j+1] = chunks[i][j]; 
+           chunks[i][j+1] = chunks[i][j]; 
         }
+        PVector chunkPos = new PVector();
         chunkPos.x = playerChunkCoordinates.x + (i-2)*chunkSize;
         chunkPos.z = playerChunkCoordinates.z - chunkSize;
-        newChunks[i][0] = new Chunk(chunkPos);
+        
+        threads[i] = new ChunkThread(chunkPos, i, 0);
+        threads[i].start();
       }
       break;
   } 
   
-    
-  for(int i = 0; i < newChunks.length; i++){
-    arrayCopy(newChunks[i], chunks[i]);
+  for(ChunkThread thread : threads){
+    try{
+      thread.join(); 
+    }catch(InterruptedException e){
+      e.printStackTrace(); 
+    }
   }
-  //delay(3000);
-  updatingChunks = false;
   
   float timeTaken = millis() - now;
   println("This took " + timeTaken/1000 + " seconds.");
 }
-  
-  
-void optimise(){
-  if(frameCount == 1){
-    calculateChunks();  
-    float initialTime = 1000;
-    while(initialTime > 30 && vertecies > 20){
-      float now = millis();
-      updateChunks();
-      initialTime = millis() - now;
-      vertecies-=2;
-    }
-    
-    println("Rendering at " + vertecies + " vertecies.");
-    
-    calculateChunks();  
-  }
-}
+
   
 //void mouseWheel(MouseEvent event){
 //  if(event.getCount()<0){

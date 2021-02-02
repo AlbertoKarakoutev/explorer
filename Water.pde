@@ -24,7 +24,7 @@ class Water{
     pushStyle();
     textureWrap(REPEAT);
     textureMode(NORMAL);
-    tint(0, 180, 255, 185);
+    tint(0, 130, 255, 150);
     shininess(20);
     specular(1, 1, 1);
     for(int z = 0; z < waves.length-1; z++){

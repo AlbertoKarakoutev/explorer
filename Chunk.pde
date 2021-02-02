@@ -1,17 +1,20 @@
 import toxi.geom.*;
 
 class Chunk{
+  
+  boolean computed = false;
+  
   PVector position;
   PVector[][] vecs = new PVector[vertecies+1][vertecies+1];
   
   float birdsDraw;
   float birdsProbability;
   
-  final float CHUNK_MIN = chunkSize/4;
+  final float CHUNK_MIN = chunkSize/2;
   final float SEA_LEVEL = 0;
-  final float SAND_LEVEL = SEA_LEVEL;
+  final float SAND_LEVEL = SEA_LEVEL+1000;
   final float SAND_GRASS_LEVEL = -chunkSize/20;
-  final float GRASS_LEVEL = -chunkSize/7;
+  final float GRASS_LEVEL = -chunkSize/5;
   final float GRASS_ROCK_LEVEL = -chunkSize/3;
   final float ROCK_LEVEL = -chunkSize/2;
   final float CHUNK_MAX = -chunkSize;
@@ -28,7 +31,9 @@ class Chunk{
   PShape grassRockShape = createShape();
   PShape rockShape = createShape();
   PShape rockToSnowShape = createShape();
+  
   Bird[] flock;
+  Cloud cloud;
   
   public Chunk(PVector position){
     this.position = position.copy();
@@ -41,6 +46,10 @@ class Chunk{
       }
     }
     
+    cloud = new Cloud(position);
+    
+    float now = millis();
+    //20-30 ms for this segment
     for(int z = 0; z <= vertecies; z++){
       for(int x = 0; x <= vertecies; x++){
         float currentHeight = calculateHeight((this.position.x + x*scale)/(chunkSize*3), (this.position.z + z*scale)/(chunkSize*3));
@@ -48,13 +57,14 @@ class Chunk{
       }
     }
     
+    //40-50 ms for this segment
     sandToGrass = new TerrainTransition(SAND_LEVEL, SAND_GRASS_LEVEL, 10, vecs, sand, grass);
     grassToRock = new TerrainTransition(GRASS_LEVEL, GRASS_ROCK_LEVEL, 5, vecs, grass, rock);
     rockToSnow = new TerrainTransition(ROCK_LEVEL, CHUNK_MAX, 10, vecs, rock, snow);
-    
     sandGrassShape = sandToGrass.getBlendedShape();
     grassRockShape = grassToRock.getBlendedShape();
     rockToSnowShape = rockToSnow.getBlendedShape();
+    
     sandShape.setTexture(sand);
     grassShape.setTexture(grass);
     rockShape.setTexture(rock);
@@ -65,14 +75,16 @@ class Chunk{
     sandShape.beginShape(QUADS);
     grassShape.beginShape(QUADS);
     rockShape.beginShape(QUADS);
+    
+    {
+    //20-30 ms for this segment
     for(int z = 0; z < vertecies; z++){
       for(int x = 0; x < vertecies; x++){
-        //chunkShape.fill(applyColor(vecs[x][z].y));
-        
         addSurface(x, z);
-        
       }
     }
+    }
+    
     sandShape.endShape();
     grassShape.endShape();
     rockShape.endShape();
@@ -83,7 +95,10 @@ class Chunk{
     chunkShape.addChild(grassRockShape);
     chunkShape.addChild(rockShape);
     chunkShape.addChild(rockToSnowShape);
-    
+     
+    computed = true;
+     
+    //println(millis()-now);
 }
 
   void addSurface(int x, int z){
@@ -98,7 +113,7 @@ class Chunk{
     
     if(thisShape == null)return;
     
-    float textureScale = chunkSize/30;
+    float textureScale = chunkSize/100;
     
     thisShape.noStroke();
     
@@ -137,12 +152,15 @@ class Chunk{
   
   
   float calculateHeight(float x, float z){
-    float noiseLevel = (float)simplexNoise.noise2(x*2,z*2);
-    float noiseDetail = noise(x*25,z*25);//*3
-    float detailMultiplier = (noiseLevel<=-0.5) ? 0.1 : map(noiseLevel, -0.5, 1, 0.1, 1);
-    float heightMultiplier = map(noiseLevel, -1, 1, 0, 1.2);
-    float value = map(noiseLevel + noiseDetail*detailMultiplier, -1, 2, CHUNK_MIN, CHUNK_MAX) * heightMultiplier;
-    return value;
+    float levelNoise = (float)simplexNoise.noise2(x*2,z*2);
+    //float levelMultiplier = map(exp(5*(levelNoise-0.9)), 0, 1, 0, 1.2);
+    float levelHeight = map(levelNoise, -10, 2, CHUNK_MIN, CHUNK_MAX) * exp(1*(levelNoise-0.9));
+    
+    float detailNoise = noise(x*25,z*25);
+    float detailMultiplier = map(levelNoise, 1/7, 1, 0.1, 1);
+    float detailHeight = map(detailNoise, -2, 1, CHUNK_MIN, CHUNK_MAX) * exp(1.5*(levelNoise-0.9));
+    
+    return (levelHeight + detailHeight)/2;
   }
   
   
@@ -152,6 +170,7 @@ class Chunk{
     pushMatrix();
     translate(position.x, position.y, position.z);
     shape(chunkShape);
+    cloud.display();
     if(birdsDraw>birdsProbability)displayBirds();  
     popMatrix();
     
@@ -175,5 +194,9 @@ class Chunk{
   
   PVector getPosition(){
     return this.position;
+  }
+  
+  boolean getComputed(){
+    return this.computed;
   }
 }

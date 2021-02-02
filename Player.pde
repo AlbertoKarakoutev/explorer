@@ -131,7 +131,7 @@ class Player{
         rotateFI(map(speed/speedMaximum, 1, 0, 0, 5)/500);
         if(speed > 0){
           if(!maintainSpeed)speed-=(speedMaximum/10)/frameRate; 
-          if(speed >= 0)location.y+=map(speed/speedMaximum, 1, 0, 0, speedMaximum);
+          if(speed >= 0 && !collided)location.y+=map(speed/speedMaximum, 1, 0, 0, speedMaximum);
         }else if(speed<0){
           if(!collided){
             location.y+=10;
@@ -153,12 +153,9 @@ class Player{
     PVector relativeLocation = new PVector((location.x%chunkSize)%scale, (location.z%chunkSize)%scale);
     playerVertex.x = (location.x>0) ? round(abs((location.x%chunkSize)/scale)) : vertecies - round(abs((location.x%chunkSize)/scale));
     playerVertex.z = (location.z>0) ? round(abs((location.z%chunkSize)/scale)) : vertecies - round(abs((location.z%chunkSize)/scale));
-    float terrainHeightAtPlayerLocation;
-    if(updatingChunks){
-      terrainHeightAtPlayerLocation = newChunks[floor(chunks.length/2)][floor(chunks.length/2)].getVertex((int)playerVertex.x, (int)playerVertex.z).y - airplane.getHeight()/2;
-    }else{
-      terrainHeightAtPlayerLocation = chunks[floor(chunks.length/2)][floor(chunks.length/2)].getVertex((int)playerVertex.x, (int)playerVertex.z).y - airplane.getHeight()/2;
-    }
+    
+    float terrainHeightAtPlayerLocation = chunks[floor(chunks.length/2)][floor(chunks.length/2)].getVertex((int)playerVertex.x, (int)playerVertex.z).y - airplane.getHeight()/2;
+    
     if(location.y > terrainHeightAtPlayerLocation){
       location.y = lerp(location.y, terrainHeightAtPlayerLocation, 0.3);
       return true;
