@@ -24,11 +24,11 @@ class Cloud{
   void display(){
     for(int row = 0; row < gridCells; row++){
       for(int col = 0; col < gridCells; col++){
-        pushMatrix();
-        translate(points[row][col].x, points[row][col].y, points[row][col].z);
-        fill(0);
-        box(1000);
-        popMatrix();
+        pushStyle();
+        stroke(255, 255, 255, 200);
+        strokeWeight(16);
+        point(points[row][col].x, points[row][col].y, points[row][col].z);
+        popStyle();
         
       }
     }

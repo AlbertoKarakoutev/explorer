@@ -11,6 +11,8 @@ int chunkNumber = 3;
 
 Player player;
 
+Menu pauseMenu;
+
 OpenSimplex2F simplexNoise;
 
 Chunk targetChunk;
@@ -21,8 +23,8 @@ boolean stop = true;
 boolean maintainSpeed = false;
 boolean updatingChunks = false;
 
-static int vertecies = 300;
-static float chunkSize = 40000;
+static int vertecies = 200;
+static float chunkSize = 20000;
 static float scale = chunkSize/vertecies;
 static final int textureSize = 200;
 
@@ -37,10 +39,12 @@ PImage sea;
 SoundFile windSound;
 SoundFile soundtrack;
 
+boolean simulating = false;
+
 void settings(){
  //fullScreen(P3D, 1);
  size(1000, 1000, P3D);
- //smooth(8);  
+ smooth(8);  
 }
 
 void setup() {
@@ -68,15 +72,20 @@ void setup() {
   sea.resize(textureSize, textureSize);
     
   bird = loadShape("models/Bird.obj");
-  bird.scale(0.3);
+  bird.scale(0.5);
     
   player = new Player();
+
+  pauseMenu = new Menu();
+  pauseMenu.addButton("Resume");
+  pauseMenu.addButton("Settings");
+
   chunks = new Chunk[chunkNumber][chunkNumber];
   
   sunLocation = new PVector(500000, -1000000, 0);
   sunLocationNormal = sunLocation.copy().normalize();
   
-  initialCalculations();
+  initializeChunks();
   
   windSound = new SoundFile(this, "sounds/wind.wav");
   soundtrack = new SoundFile(this, "sounds/soundtrack.wav");
@@ -85,32 +94,40 @@ void setup() {
 }
 
 void draw() {
-  
-  //optimise();
+  //run();
+  if(!simulating){
+    pause();
+  }else{
+    run();
+  }
+
+}
+
+void run(){
+  pauseMenu.setShowing(false);
   background(168, 231, 252);
-  perspective(map(player.getSpeed(), 0, player.getMaximumSpeed(), PI/2, PI/(1.98)), float(width)/float(height), (height/2) / tan((PI/3)/2)/10, chunkSize*100); 
+  perspective(map(player.getVelocity(), 0, player.getMaximumVelocity(), PI/2, PI/(1.98)), float(width)/float(height), (height/2) / tan((PI/3)/2)/10, chunkSize*100); 
   noStroke();
   
   if((int)playerChunk[0] != (int)player.getChunk()[0] || (int)playerChunk[1] != (int)player.getChunk()[1]){
-    //updatingChunks = true;
     updateChunks();
-    //calculateChunks();
  
   }
   playerChunk = player.getChunk();
   player.update();
-  
+
   push();
   translate(sunLocation.x, sunLocation.y, sunLocation.z);
-  fill(248, 252, 217);
+  fill(255, 255, 255);
   emissive(248, 252, 217);
   sphere(100000);
   pop();
   
   lightSpecular(248, 252, 217);
   //pointLight(215, 217, 184, player.getLocation().x, -2000, player.getLocation().z);
-  directionalLight(248, 252, 217, sunLocationNormal.x, -sunLocationNormal.y, sunLocationNormal.z);
+  directionalLight(255, 255, 255, sunLocationNormal.x, -sunLocationNormal.y, sunLocationNormal.z);
   
+  ambientLight(100, 100, 100);
   
   for(int i = 0; i < chunks.length; i++){
     for(int j = 0; j < chunks[0].length; j++){
@@ -118,11 +135,15 @@ void draw() {
     }
   }
   
-  
   //new Water(newChunks[0][0].getPosition()).display();
 }
 
-void initialCalculations(){
+void pause(){
+  pauseMenu.show();
+  pauseMenu.setShowing(true);
+}
+
+void initializeChunks(){
   scale = chunkSize/vertecies;
   PVector playerChunkCoordinates = new PVector();
   playerChunkCoordinates.x = player.getChunk()[0]*chunkSize;
@@ -137,18 +158,6 @@ void initialCalculations(){
     }
   }
 }
-
-//void calculateChunks(){
-//  scale = chunkSize/vertecies;
-//  PVector playerChunkCoordinates = new PVector();
-//  playerChunkCoordinates.x = player.getChunk()[0]*chunkSize;
-//  playerChunkCoordinates.y = 0;
-//  playerChunkCoordinates.z = player.getChunk()[1]*chunkSize;
-  
-//  thread = new ChunkThread(playerChunkCoordinates); //<>//
-//  thread.start();
-//}
-
 
 void updateChunks(){
   
@@ -232,7 +241,7 @@ void updateChunks(){
   for(ChunkThread thread : threads){
     try{
       thread.join(); 
-    }catch(InterruptedException e){
+    }catch(Exception e){
       e.printStackTrace(); 
     }
   }
@@ -241,16 +250,6 @@ void updateChunks(){
   println("This took " + timeTaken/1000 + " seconds.");
 }
 
-  
-//void mouseWheel(MouseEvent event){
-//  if(event.getCount()<0){
-//    vertecies+=10;
-//  }else{
-//    if(vertecies-10>0)vertecies-=10;
-//  }
-//  println("Vertecies: " + vertecies);
-//  calculateChunks();
-//}
 
 void keyPressed(){
   if(keyCode == ENTER){
@@ -259,5 +258,13 @@ void keyPressed(){
 }
 
 void mousePressed() {
-  stop = !stop;
+  if(pauseMenu.getShowing()){
+    if(pauseMenu.getButton(0).mouseHovering()){
+      stop = !stop;
+      simulating = !simulating;
+    }
+  }else{
+    stop = !stop;
+    simulating = !simulating;
+  }
 }

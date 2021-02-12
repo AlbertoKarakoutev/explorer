@@ -34,6 +34,7 @@ class TerrainTransition{
   
   PShape getBlendedShape(){
       
+    float now = millis();
     for(int i = 0; i < levels.length; i++){
       int[] maskArray = new int[textureSize*textureSize];
       int[] reverseMaskArray = new int[textureSize*textureSize];
@@ -52,9 +53,9 @@ class TerrainTransition{
       levels[i].beginShape(QUADS);
     }
     
-    for(int i = 0; i < levels.length; i++){
-      for(int z = 0; z < points.length-1; z++){
-        for(int x = 0; x < points[z].length-1; x++){
+    for(int z = 0; z < points.length-1; z++){
+      for(int x = 0; x < points[z].length-1; x++){
+        for(int i = 0; i < levels.length; i++){
           if(points[x][z].y <= start-i*(range/blendLevel) && points[x][z].y > start-(i+1)*(range/blendLevel)){
             PVector n = PVector.sub(points[x][z], points[x+1][z], null).cross(PVector.sub(points[x][z+1], points[x+1][z], null));
             n.normalize();
@@ -72,6 +73,7 @@ class TerrainTransition{
         }
       }
     }
+    //println(millis() - now + "ms");
     
     for(int i = 0; i < levels.length; i++){
       levels[i].endShape();

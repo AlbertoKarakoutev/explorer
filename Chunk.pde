@@ -1,14 +1,10 @@
-import toxi.geom.*;
-
 class Chunk{
-  
-  boolean computed = false;
   
   PVector position;
   PVector[][] vecs = new PVector[vertecies+1][vertecies+1];
   
-  float birdsDraw;
-  float birdsProbability;
+  float birdsSpawnPercentage;
+  float birdsSpawnPercentageMinimum;
   
   final float CHUNK_MIN = chunkSize/2;
   final float SEA_LEVEL = 0;
@@ -37,30 +33,31 @@ class Chunk{
   
   public Chunk(PVector position){
     this.position = position.copy();
-    birdsDraw = random(1);
-    birdsProbability = 0.7;
-    if(birdsDraw>birdsProbability){
-      flock = new Bird[20];
+    birdsSpawnPercentage = random(1);
+    birdsSpawnPercentageMinimum = 0;
+    if(birdsSpawnPercentage>birdsSpawnPercentageMinimum){
+      flock = new Bird[40];
       for(int i = 0; i < flock.length; i++){
         flock[i] = new Bird(this);
       }
     }
     
-    cloud = new Cloud(position);
+    //cloud = new Cloud(position);
     
     float now = millis();
     //20-30 ms for this segment
     for(int z = 0; z <= vertecies; z++){
       for(int x = 0; x <= vertecies; x++){
-        float currentHeight = calculateHeight((this.position.x + x*scale)/(chunkSize*3), (this.position.z + z*scale)/(chunkSize*3));
-        vecs[x][z] = new PVector(x*scale, currentHeight, z*scale);
+        vecs[x][z] = new PVector(x*scale, calculateHeight(x, z), z*scale);
       }
     }
     
-    //40-50 ms for this segment
+    
     sandToGrass = new TerrainTransition(SAND_LEVEL, SAND_GRASS_LEVEL, 10, vecs, sand, grass);
     grassToRock = new TerrainTransition(GRASS_LEVEL, GRASS_ROCK_LEVEL, 5, vecs, grass, rock);
-    rockToSnow = new TerrainTransition(ROCK_LEVEL, CHUNK_MAX, 10, vecs, rock, snow);
+    rockToSnow = new TerrainTransition(ROCK_LEVEL, CHUNK_MAX, 15, vecs, rock, snow);
+    
+    //40-50 ms for this segment
     sandGrassShape = sandToGrass.getBlendedShape();
     grassRockShape = grassToRock.getBlendedShape();
     rockToSnowShape = rockToSnow.getBlendedShape();
@@ -71,18 +68,17 @@ class Chunk{
     
     textureWrap(REPEAT);
     textureMode(NORMAL);
-    //chunkShape.noStroke();
+    
     sandShape.beginShape(QUADS);
     grassShape.beginShape(QUADS);
     rockShape.beginShape(QUADS);
     
-    {
+  
     //20-30 ms for this segment
     for(int z = 0; z < vertecies; z++){
       for(int x = 0; x < vertecies; x++){
         addSurface(x, z);
       }
-    }
     }
     
     sandShape.endShape();
@@ -96,10 +92,9 @@ class Chunk{
     chunkShape.addChild(rockShape);
     chunkShape.addChild(rockToSnowShape);
      
-    computed = true;
-     
     //println(millis()-now);
 }
+
 
   void addSurface(int x, int z){
     PShape thisShape = null;
@@ -124,40 +119,18 @@ class Chunk{
     thisShape.vertex(vecs[x+1][z+1].x, vecs[x+1][z+1].y, vecs[x+1][z+1].z, ((x+1)*scale)/textureScale, ((z+1)*scale)/textureScale);
     thisShape.vertex(vecs[x][z+1].x, vecs[x][z+1].y, vecs[x][z+1].z, (x*scale)/textureScale, ((z+1)*scale)/textureScale);
     
-  }
- 
-  int applyColor(float y){
-    if(y >= SEA_LEVEL){
-      return color(214, 175, 15);
-    }
-    if(y < SEA_LEVEL && y > SAND_LEVEL){
-      color c1 = color(214, 175, 15);
-      color c2 = color(31, 97, 16);
-      return lerpColor(c1, c2, map(y, SEA_LEVEL, SAND_LEVEL, 0, 1));
-      
-    }
-    if(y < SAND_GRASS_LEVEL && y > ROCK_LEVEL){
-      color c1 = color(255, 255, 255);
-      color c2 = color(31, 97, 16);
-      return lerpColor(c2, c1, map(y, SAND_LEVEL, ROCK_LEVEL, 0, 1));
-      
-    }
-    if(y < ROCK_LEVEL){
-      color c1 = color(255);
-      color c2 = color(145, 145, 145);
-      return lerpColor(c1, c2, map(y, ROCK_LEVEL, CHUNK_MAX, 0, 1));
-    }
-    return 0;
-  }
+  } 
   
-  
-  float calculateHeight(float x, float z){
+  float calculateHeight(float xInitial, float zInitial){
+    float x = (this.position.x + xInitial*scale)/(chunkSize*3);
+    float z = (this.position.z + zInitial*scale)/(chunkSize*3);
+    
     float levelNoise = (float)simplexNoise.noise2(x*2,z*2);
     //float levelMultiplier = map(exp(5*(levelNoise-0.9)), 0, 1, 0, 1.2);
     float levelHeight = map(levelNoise, -10, 2, CHUNK_MIN, CHUNK_MAX) * exp(1*(levelNoise-0.9));
     
     float detailNoise = noise(x*25,z*25);
-    float detailMultiplier = map(levelNoise, 1/7, 1, 0.1, 1);
+    //float detailMultiplier = map(levelNoise, 1/7, 1, 0.1, 1);
     float detailHeight = map(detailNoise, -2, 1, CHUNK_MIN, CHUNK_MAX) * exp(1.5*(levelNoise-0.9));
     
     return (levelHeight + detailHeight)/2;
@@ -169,9 +142,12 @@ class Chunk{
     shapeMode(CORNER);
     pushMatrix();
     translate(position.x, position.y, position.z);
+    pushStyle();
+    ambient(255, 255, 255);
     shape(chunkShape);
-    cloud.display();
-    if(birdsDraw>birdsProbability)displayBirds();  
+    popStyle();
+    //cloud.display();
+    if(birdsSpawnPercentage>birdsSpawnPercentageMinimum)displayBirds();  
     popMatrix();
     
   }
@@ -196,7 +172,4 @@ class Chunk{
     return this.position;
   }
   
-  boolean getComputed(){
-    return this.computed;
-  }
 }

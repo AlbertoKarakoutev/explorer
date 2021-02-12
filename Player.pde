@@ -2,12 +2,15 @@ class Player{
  
   PVector cameraLocation;
   PVector location;
-  PVector playerVertex;
+  PVector velocity;
+  PVector weight;
+  PVector playerVertexFloat;
   
   float viewFactor = 10;
   float radius = 3000/viewFactor;
-  float speed = 0;
-  float speedMaximum = (viewFactor > 2) ? 150/(viewFactor-2) : 150/viewFactor;
+  //float speedMaximum = (viewFactor > 2) ? 15/(viewFactor-2) : 15/viewFactor;
+  float acceleration = 0;
+  float maximumVelocity = 250;
   float theta;
   float fi;
 
@@ -19,10 +22,12 @@ class Player{
   public Player(){
     
       airplane = loadShape("models/Plane.obj");
-      playerVertex = new PVector();
+      playerVertexFloat = new PVector();
       airplane.scale(4/viewFactor);
       cameraLocation = new PVector(0,0,0);
-      location = new PVector(0, -10000, 0);
+      location = new PVector(chunkSize/2, -10000, chunkSize/2);
+      velocity = new PVector();
+      weight = new PVector(0, 1, 0);
 
       PVector psLocation = location.copy();
       psLocation.y +=10;
@@ -38,9 +43,10 @@ class Player{
   
   
   void look(){
-    cameraLocation.x = location.x + radius * cos(theta) * sin(-fi);
-    cameraLocation.z = location.z + radius * sin(theta) * sin(-fi);
-    cameraLocation.y = location.y + radius * cos(-fi);
+      
+      cameraLocation.x = location.x + radius * cos(theta) * sin(-fi);
+      cameraLocation.z = location.z + radius * sin(theta) * sin(-fi);
+      cameraLocation.y = location.y + radius * cos(-fi);
       
     pushMatrix();
     translate(location.x, location.y, location.z);
@@ -77,6 +83,66 @@ class Player{
   }
 
 
+
+
+  void move(){
+
+    movementEffects();
+    
+    if(acceleration > maximumVelocity)acceleration = maximumVelocity;
+
+    if(!stop){
+      if(keyPressed){
+        if (key == 'w') {
+          acceleration+=1;
+        }else{
+          acceleration = (acceleration >= 0) ? acceleration-1 : 0;
+        }
+        if (keyCode == SHIFT) {
+          maximumVelocity += 0.1;
+        }
+        if(key == 'r'){
+          location = new PVector(0, -5000, 0);
+          initializeChunks();
+        }
+      }else{
+        acceleration = (acceleration >= 0) ? acceleration-1 : 0;
+      }
+      
+      velocity.x = acceleration * -cos(theta) * sin(-fi);
+      velocity.z = acceleration * -sin(theta) * sin(-fi);
+      velocity.y = acceleration * -cos(-fi);
+
+      weight.mult(map(velocity.mag(), 0, maximumVelocity, maximumVelocity, 0));
+      if(!isUnderground(PVector.add(velocity, weight).add(location).y))velocity.add(weight);
+
+      if(velocity.mag() < 1){
+        velocity.setMag(0);
+      }
+      
+      if(isUnderground(location.y+velocity.y/10)){
+        location.x+=velocity.x/10;
+        location.z+=velocity.z/10;
+        if(location.y+velocity.y < location.y)location.add(velocity.copy().div(10));
+      }else{
+        location.add(velocity.copy().div(10));
+      }
+      weight.set(0, 1, 0);
+    }
+  }
+  
+  
+  boolean isUnderground(float playerHeight){
+    playerVertexFloat.x = (location.x>=0) ? (location.x%chunkSize)/scale : vertecies - (abs(location.x)%chunkSize)/scale;
+    playerVertexFloat.z = (location.z>=0) ? (location.z%chunkSize)/scale : vertecies - (abs(location.z)%chunkSize)/scale;
+    float terrainHeightAtPlayerLocation = chunks[floor(chunks.length/2)][floor(chunks.length/2)].calculateHeight(playerVertexFloat.x, playerVertexFloat.z);
+    if(playerHeight > terrainHeightAtPlayerLocation){
+      location.y = lerp(location.y, terrainHeightAtPlayerLocation, 0.3);
+      return true;
+    }
+    return false;
+  }
+    
   void displayInformation(){
     textSize(200/viewFactor);
     noLights();
@@ -85,10 +151,10 @@ class Player{
     rotateX(-HALF_PI);
     rotateZ(-HALF_PI);
     text((int)location.x + ", " + ((int)-location.y) + ", " + (int)location.z, -1000/viewFactor, -400/viewFactor, 0);
-    text("Speed: " + speed, -500, -200, 0);
+    text("Speed: " + round(velocity.mag()) + " km/h", -300, -200, 0);
+    text("Maximum speed: " + round(maximumVelocity) + " km/h", -300, -240, 0);
     popStyle();
   }
-
 
   void rotateFI(float amount){
     if(fi<3 && fi > 0.1){
@@ -102,67 +168,6 @@ class Player{
     if(fi > 3) fi=3;
   }
 
-
-  void move(){
-    boolean collided = detectCollision();
-    movementEffects();
-    
-    float ratio = (radius + speed)/radius;
-    
-    
-    if(keyPressed){
-      
-      if (key == 'w') {
-        if(speed < speedMaximum)speed+=(speedMaximum/4)/frameRate; 
-        
-      }
-      
-      if (keyCode == SHIFT) {
-        speedMaximum += 1;
-      }
-      
-      if(key == 'r'){
-        location = new PVector(0, -5000, 0);
-        initialCalculations();
-      }
-      
-    }else{
-      if(!stop){
-        rotateFI(map(speed/speedMaximum, 1, 0, 0, 5)/500);
-        if(speed > 0){
-          if(!maintainSpeed)speed-=(speedMaximum/10)/frameRate; 
-          if(speed >= 0 && !collided)location.y+=map(speed/speedMaximum, 1, 0, 0, speedMaximum);
-        }else if(speed<0){
-          if(!collided){
-            location.y+=10;
-          }
-        }
-      }
-    }
-    if(!stop){
-      if(!collided){
-        location.y = (1-ratio)*cameraLocation.y + ratio*location.y;
-      }
-      location.x = (1-ratio)*cameraLocation.x + ratio*location.x;
-      location.z = (1-ratio)*cameraLocation.z + ratio*location.z;
-    }
-  }
-  
-  
-  boolean detectCollision(){
-    PVector relativeLocation = new PVector((location.x%chunkSize)%scale, (location.z%chunkSize)%scale);
-    playerVertex.x = (location.x>0) ? round(abs((location.x%chunkSize)/scale)) : vertecies - round(abs((location.x%chunkSize)/scale));
-    playerVertex.z = (location.z>0) ? round(abs((location.z%chunkSize)/scale)) : vertecies - round(abs((location.z%chunkSize)/scale));
-    
-    float terrainHeightAtPlayerLocation = chunks[floor(chunks.length/2)][floor(chunks.length/2)].getVertex((int)playerVertex.x, (int)playerVertex.z).y - airplane.getHeight()/2;
-    
-    if(location.y > terrainHeightAtPlayerLocation){
-      location.y = lerp(location.y, terrainHeightAtPlayerLocation, 0.3);
-      return true;
-    }
-    return false;
-  }
-    
   void movementEffects(){
     
     PVector wind = cameraLocation.copy();
@@ -172,8 +177,8 @@ class Player{
     ps.run(psLocation);
     
     wind.y-=500;
-    if(speed>0){
-      windSound.amp(map(speed, 0, speedMaximum, 0, 0.1));
+    if(velocity.mag()>0){
+      windSound.amp(map(velocity.mag(), 0, maximumVelocity, 0, 0.1));
       if(!windSound.isPlaying()){
         //windSound.loop();
       }
@@ -193,30 +198,7 @@ class Player{
       }
     }
   }
-    
-  float[] getChunk(){
-    float[] chunkNum = new float[2];
-    if(location.x>=0){
-      chunkNum[0] = floor((chunkSize + location.x)/chunkSize);
-    }else{
-      chunkNum[0] = ceil(location.x/chunkSize);
-    }
-    if(location.z>=0){
-      chunkNum[1] = floor(location.z/chunkSize);
-    }else{
-      chunkNum[1] = ceil((-chunkSize + location.z)/chunkSize);
-    }
-    return chunkNum;
-  }
-
-  float getSpeed(){
-    return this.speed;
-  }
   
-  float getMaximumSpeed(){
-    return this.speedMaximum;
-  }
-
   PVector getCameraLocation(){
     return this.cameraLocation;
   }
@@ -225,10 +207,26 @@ class Player{
     return this.location;
   }
   
+  float[] getChunk(){
+    float[] chunkNum = new float[2];
+
+    chunkNum[0] = (location.x>=0) ? floor((chunkSize + location.x)/chunkSize) : ceil(location.x/chunkSize);
+    chunkNum[1] = (location.z>=0) ? floor(location.z/chunkSize) : ceil((-chunkSize + location.z)/chunkSize);
+   
+    return chunkNum;
+  }
+
   float getRadius(){
     return this.radius;
   }
  
+  float getVelocity(){
+    return this.velocity.mag();
+  }
   
+  float getMaximumVelocity(){
+    return this.maximumVelocity;
+  }
+
 }
  

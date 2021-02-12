@@ -30,8 +30,6 @@ class Bird{
     pushMatrix();
     translate(position.x, position.y, position.z);
     rotateY(-theta);
-    //rotateX(-fi);
-    //bird.setFill(0);
     shape(bird);
     popMatrix();
   }
