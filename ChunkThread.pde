@@ -4,7 +4,6 @@ class ChunkThread extends Thread{
   
   int row, col;
   
-  
   public ChunkThread(PVector chunkPos, int row, int col){
     this.chunkPos = chunkPos;
     this.row = row;
@@ -12,7 +11,7 @@ class ChunkThread extends Thread{
   }
   
   void run(){
-    chunks[row][col] = new Chunk(chunkPos); //<>//
+    chunks[row][col] = new Chunk(chunkPos);
   }
   
 }

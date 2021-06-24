@@ -1,35 +1,30 @@
 class Button{
 
     PImage buttonTexture;
-    String function;
-    PVector location;
+    float yLocation;
     PVector size;
 
     String name;
 
-    public Button(String name, PVector size){
+    public Button(String name){
         this.name = name;
-        this.size = size;
     }
 
-    void show(Menu menu, PVector location){
-        this.location = location;
-
+    void show(Menu menu, float yLocation){
+        
+        this.yLocation = yLocation;
+        
         PGraphics menuPanel = menu.getPanel();
         menuPanel.beginDraw();
 
         menuPanel.fill(coloring());
-        menuPanel.rect(location.x, location.y, size.x, size.y);
+        menuPanel.rect(width/3, yLocation, width/3, 50);
 
         menuPanel.fill(0);
         menuPanel.textSize(50);
-        menuPanel.text(name, location.x+(size.x-menuPanel.textWidth(name))/2, location.y+(size.y-10));
+        menuPanel.text(name, width/3+(width/3-menuPanel.textWidth(name))/2, yLocation+40);
 
         menuPanel.endDraw();
-    }
-
-    boolean mouseHovering(){
-        return mouseX > location.x && mouseX < location.x+size.x && mouseY > location.y && mouseY < location.y+size.y;
     }
 
     int coloring(){
@@ -38,6 +33,11 @@ class Button{
         }else{
             return color(255, 255, 255);
         }
+    }
+
+    boolean mouseHovering(){
+        return mouseX > width/3 && mouseX < 2*width/3 && mouseY > yLocation && mouseY < yLocation+50;
+        
     }
 
 }

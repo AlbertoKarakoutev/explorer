@@ -10,7 +10,7 @@ class Bird{
   Chunk chunk;
   
   public Bird(Chunk chunk){
-    position = new PVector(random(chunkSize/2), random(-chunkSize/0.9, -chunkSize), random(chunkSize/2)); 
+    position = new PVector(random(chunkSize/2), -random(chunkSize*0.4, chunkSize*0.6), random(chunkSize/2)); 
     velocity = PVector.random3D();
     velocity.setMag(random(20, 40));
     this.chunk = chunk;
@@ -18,27 +18,29 @@ class Bird{
     
   }
   
-  
+  /*
+    Update a bird's location, rotate the model accordingly and display it.
+  */
   void display(){
     update();
 
     float theta = atan(velocity.z/velocity.x);
     float fi = atan(velocity.y/velocity.x);
-    if(velocity.x>=0)theta += PI/2; fi += PI/2;
-    if(velocity.x<0)theta += PI*1.5; fi += PI*1.5;
+    if(velocity.x >= 0)theta += PI/2; fi += PI/2;
+    if(velocity.x < 0) theta += PI*1.5; fi += PI*1.5;
     
     pushMatrix();
     translate(position.x, position.y, position.z);
     rotateY(-theta);
+    rotateX(fi);
     shape(bird);
     popMatrix();
   }
-  
-  
-  void avoid() {
-    
-    PVector steering = new PVector();
-    
+
+  /*
+    Apply a negative force to the bird's direction if a directional ray is outside the chunk bounds.
+  */
+  void avoidChunkBounds(){
     float db = dist(position.x, position.y, position.z, position.x, 0, position.z);
     float dt = dist(position.x, position.y, position.z, position.x, -chunkSize, position.z);
     float dl = dist(position.x, position.y, position.z, 0, position.y, position.z);
@@ -53,17 +55,22 @@ class Bird{
       float dist1 = min(db, dt, dl);
       float dist2 = min(dr, df, dba);
       float dist = min(dist1, dist2);
-      for(PVector ray : rays()){
+      for(PVector ray : generateRaySphere()){
         
-        if(isInside(PVector.add(position, ray), min)){
+        if(isVertorInsideChunk(PVector.add(position, ray), min)){
           ray.setMag(map(dist, 100, 0, 0, 3));
           acceleration.add(ray);
           break;
         }
       }
     }
+  }
 
-    PVector birdVertex = new PVector();
+  /*
+    If a bird's location is below the terrain height at this point, apply a force that reverses the bird's flight direction.
+  */
+  void avoidTerrain(){
+    PVector birdVertex = new PVector(); 
     birdVertex.x = (position.x>0) ? round(abs((position.x%chunkSize)/scale)) : vertecies - round(abs((position.x%chunkSize)/scale));
     birdVertex.y = position.y;
     birdVertex.z = (position.z>0) ? round(abs((position.z%chunkSize)/scale)) : vertecies - round(abs((position.z%chunkSize)/scale));
@@ -74,8 +81,17 @@ class Bird{
       position.y-=0.2;
     }
   }
+
+  void avoidCollisions() {
+
+    avoidChunkBounds();
+    avoidTerrain();
+
+  }
   
-  
+  /*
+    Alignment from the boid algorithm, responsible for the average of the flock's general direction of flight. 
+  */
   void alignment(Bird[] birds){
     float viewDistance = chunkSize/6;
     float total = 0;
@@ -96,9 +112,11 @@ class Bird{
     acceleration.add(direction.mult(1));
   }
   
-  
+  /*
+    Cohesion from the boid algorithm, responsible for the clustering of the boids in the center of the flock.
+  */
   void cohesion(Bird[] birds){
-    float viewDistance = chunkSize/5;
+    float viewDistance = chunkSize/3;
     float total = 0;
     PVector direction = new PVector();
     for(Bird bird : birds){
@@ -118,37 +136,37 @@ class Bird{
     acceleration.add(direction.mult(1));
   }
   
-  
+  /*
+    Separation from the boid algorithm, responsible for the lack of collisions between the birds.
+  */
   void separation(Bird[] birds){
-    float viewDistance = chunkSize/20;
+    float viewDistance = chunkSize/40;
     float total = 0;
     PVector direction = new PVector();
     for(Bird bird : birds){
       float d = dist(position.x, position.y, position.z, bird.position.x, bird.position.y, bird.position.z);
       if(bird != this && d < viewDistance){
         PVector diff = PVector.sub(position, bird.position);
-        //diff.div(viewDistance);
         direction.add(diff);
         total++;
       }
     }
     if(total > 0){
       direction.div(total);
-      //direction.setMag(maxSpeed);
       direction.sub(velocity);
       direction.limit(maxForce);
     }
     acceleration.add(direction.mult(1));
   }
   
-  boolean isInside(PVector vector, float offset){
+  boolean isVertorInsideChunk(PVector vector, float offset){
     if(vector.x <= offset || vector.x >= chunkSize-offset)return false;
     if(vector.y >= -offset || vector.y <= -chunkSize+offset)return false;
     if(vector.z <= offset || vector.z >= chunkSize-offset)return false;
     return true;
   }
-    
-  PVector[] rays(){
+
+  PVector[] generateRaySphere(){
     
     int numViewDirections = 25;
     PVector[] directions = new PVector[numViewDirections];
@@ -172,11 +190,7 @@ class Bird{
   }
   
   void update(){
-    float chance = random(1);
-    if(chance > 0.8){
-      //acceleration = PVector.random3
-    }
-    velocity.limit(4);
+    velocity.limit(6);
     position.add(velocity);
     velocity.add(acceleration);
   }

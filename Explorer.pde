@@ -1,8 +1,9 @@
-import processing.sound.*;
+import processing.sound.*; //<>//
 
 PVector[] points = new PVector[10];
 PVector sunLocation;
 PVector sunLocationNormal;
+float sunFI = 3;
 
 float offset = 0;
 float[] playerChunk = {1, 0};
@@ -11,26 +12,29 @@ int chunkNumber = 3;
 
 Player player;
 
-Menu pauseMenu;
+Menu menu;
+MenuActions ma;
 
-OpenSimplex2F simplexNoise;
+OpenSimplex2F simplexNoise; //<>//
 
-Chunk targetChunk;
 Chunk[][] chunks;
-ChunkThread thread;
 
-boolean stop = true;
-boolean maintainSpeed = false;
-boolean updatingChunks = false;
+static boolean stop = true;
 
-static int vertecies = 200;
-static float chunkSize = 20000;
+static boolean areBirdsVisible = false;
+static boolean isWaterVisible = false;
+static boolean areDetailsVisible = true;
+static boolean isGravityActive = true;
+
+static int lowestPoint = -5;
+
+static int vertecies = 100;
+static float chunkSize = 40000;
 static float scale = chunkSize/vertecies;
 static final int textureSize = 200;
 
 PShape bird;
-PImage loading;
-PImage grass;
+PImage grass; 
 PImage rock;
 PImage snow;
 PImage sand;
@@ -42,24 +46,11 @@ SoundFile soundtrack;
 boolean simulating = false;
 
 void settings(){
- //fullScreen(P3D, 1);
  size(1000, 1000, P3D);
- smooth(8);  
 }
 
 void setup() {
-  
-  hint(ENABLE_STROKE_PURE);
-  
-  noiseSeed(125);
-  
-  noiseDetail(6);
-  simplexNoise = new OpenSimplex2F(125);
-  
-  loading = loadImage("images/loading.png");
-  loading.resize(width,height);
-  background(loading);
-  
+  /*Setup textures*/
   grass = loadImage("images/grass.jpg");
   rock = loadImage("images/rock.jpg");
   snow = loadImage("images/snow.jpg");
@@ -73,20 +64,28 @@ void setup() {
     
   bird = loadShape("models/Bird.obj");
   bird.scale(0.5);
-    
+      
+  noiseSeed(125);
+  noiseDetail(6);
+  simplexNoise = new OpenSimplex2F(125);
+  
   player = new Player();
 
-  pauseMenu = new Menu();
-  pauseMenu.addButton("Resume");
-  pauseMenu.addButton("Settings");
+  /*Setup menu*/
+  menu = new Menu();
+  menu.addButton("Resume");
+  menu.addButton("Settings");
+  menu.addButton("Exit");
+  ma = new MenuActions();
 
   chunks = new Chunk[chunkNumber][chunkNumber];
   
-  sunLocation = new PVector(500000, -1000000, 0);
+  sunLocation = new PVector(1000000, -1000000, 0);
   sunLocationNormal = sunLocation.copy().normalize();
   
   initializeChunks();
   
+  /*Setup sound files*/
   windSound = new SoundFile(this, "sounds/wind.wav");
   soundtrack = new SoundFile(this, "sounds/soundtrack.wav");
   soundtrack.amp(0.5);
@@ -94,55 +93,51 @@ void setup() {
 }
 
 void draw() {
-  //run();
   if(!simulating){
     pause();
   }else{
     run();
   }
-
 }
 
 void run(){
-  pauseMenu.setShowing(false);
-  background(168, 231, 252);
-  perspective(map(player.getVelocity(), 0, player.getMaximumVelocity(), PI/2, PI/(1.98)), float(width)/float(height), (height/2) / tan((PI/3)/2)/10, chunkSize*100); 
+  menu.setShowing(false);
+    
+  updateBackground();
+
+  perspective(map(player.getVelocity(), 0, player.getMaximumVelocity(), PI/2, PI/(1.98)), float(width)/float(height), 5, chunkSize*100); 
   noStroke();
   
+  /*Update chunks if a player passes a chunk border*/
   if((int)playerChunk[0] != (int)player.getChunk()[0] || (int)playerChunk[1] != (int)player.getChunk()[1]){
     updateChunks();
- 
   }
+
+  //displayLaunchTrack();
+
   playerChunk = player.getChunk();
   player.update();
 
-  push();
-  translate(sunLocation.x, sunLocation.y, sunLocation.z);
-  fill(255, 255, 255);
-  emissive(248, 252, 217);
-  sphere(100000);
-  pop();
-  
-  lightSpecular(248, 252, 217);
-  //pointLight(215, 217, 184, player.getLocation().x, -2000, player.getLocation().z);
-  directionalLight(255, 255, 255, sunLocationNormal.x, -sunLocationNormal.y, sunLocationNormal.z);
-  
-  ambientLight(100, 100, 100);
-  
+  updateSun();
+
+  /*Display the chunks*/
   for(int i = 0; i < chunks.length; i++){
     for(int j = 0; j < chunks[0].length; j++){
       chunks[i][j].display();
     }
   }
   
-  //new Water(newChunks[0][0].getPosition()).display();
+  if(isWaterVisible)new Water(chunks[0][0].getPosition()).display();
 }
 
 void pause(){
-  pauseMenu.show();
-  pauseMenu.setShowing(true);
+  menu.show();
+  menu.setShowing(true);
 }
 
+/*
+  Initialization for the 9 chunks around the player, while he is always in the center chunk.
+*/
 void initializeChunks(){
   scale = chunkSize/vertecies;
   PVector playerChunkCoordinates = new PVector();
@@ -159,6 +154,10 @@ void initializeChunks(){
   }
 }
 
+/*
+  Determine player movement direction and load 3 new chunks in front by using multithreading. 
+  Remove the 3 chunks behind the player.
+*/
 void updateChunks(){
   
   float now = millis();
@@ -250,21 +249,103 @@ void updateChunks(){
   println("This took " + timeTaken/1000 + " seconds.");
 }
 
+/*Handle the sun's location and lighting*/
+void updateSun(){
+  sunFI += 0.001;
+  sunFI = sunFI%TWO_PI;
+  sunLocation.x = player.getLocation().x + 1000000 * cos(0) * sin(sunFI);
+  sunLocation.z = player.getLocation().z + 1000000 * sin(0) * sin(sunFI);
+  sunLocation.y = player.getLocation().y + 1000000 * cos(sunFI);
+  sunLocationNormal = sunLocation.copy().normalize();
 
-void keyPressed(){
-  if(keyCode == ENTER){
-    maintainSpeed = !maintainSpeed;
+  push();
+    translate(sunLocation.x, sunLocation.y, sunLocation.z);
+    fill(255, 255, 255);
+    emissive(248, 252, 217);
+    shapeMode(CENTER);
+    sphere(100000);
+  pop();
+
+  directionalLight(255, 255, 255, sunLocationNormal.x, -sunLocationNormal.y, sunLocationNormal.z);
+  
+  ambientLight(50, 50, 50);
+  
+}
+
+/*Set the sky colors*/
+void updateBackground(){
+   
+  float bgRed = map(sunLocation.y, 450000, -200000, 0, 168);
+  float bgGreen = map(sunLocation.y, 400000, -200000, 0, 231);
+  float bgBlue = map(sunLocation.y, 400000, -200000, 0, 252);
+  bgRed = limit(bgRed, 168);
+  bgGreen = limit(bgGreen, 231);
+  bgBlue = limit(bgBlue, 252);
+  background(bgRed, bgGreen, bgBlue);
+  
+}
+
+float limit(float bgColor, float max){
+  return (bgColor<max)?bgColor:max;
+}
+
+/*Handle menu actions*/ 
+void mousePressed() {
+  if(menu.getShowing()){
+    
+    if(menu.mouseHovering("Resume", true)){
+      ma.resume();
+    }else if(menu.mouseHovering("Settings", true)){
+      ma.settings();
+    }else if(menu.mouseHovering("Save", true)){
+      ma.save();
+    }else if(menu.mouseHovering("Exit", true)){
+      ma.exitSimulator();
+    }else if(menu.mouseHovering("Birds", false)){
+      ma.check("Birds");
+    }else if(menu.mouseHovering("Water", false)){
+      ma.check("Water");
+    }else if(menu.mouseHovering("Terrain Details", false)){
+      ma.check("Terrain Details");
+    }else if(menu.mouseHovering("Gravity", false)){
+      ma.check("Gravity");
+    }
   }
 }
 
-void mousePressed() {
-  if(pauseMenu.getShowing()){
-    if(pauseMenu.getButton(0).mouseHovering()){
-      stop = !stop;
-      simulating = !simulating;
+void keyPressed() {
+  if (key == ESC) {
+    key = 0;
+    if(menu.getShowing()){
+        ma.resume();
+        return;
     }
-  }else{
     stop = !stop;
     simulating = !simulating;
   }
 }
+
+void mouseWheel(MouseEvent event){
+  if(event.getCount()<0){
+    player.radius -= 10;
+  }else{
+    player.radius += 10;
+  }
+}
+
+
+// void displayLaunchTrack(){
+//   push();
+
+//   translate(chunkSize/4, -chunkSize/10, chunkSize/2);
+//   shapeMode(CENTER);
+//   fill(170);
+//   strokeWeight(10);
+//   stroke(0);
+  
+//   shininess(20);
+//   specular(1, 1, 1);
+//   box(0.8*chunkSize, chunkSize/10, chunkSize*0.1);
+
+//   pop();
+// }

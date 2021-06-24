@@ -4,7 +4,7 @@ class Particle {
   PVector acc;
   float lifespan;
 
-  Particle(PVector l) {
+  public Particle(PVector l) {
     acc = new PVector(0, 0);
     float vx = randomGaussian()*0.2;
     float vz = randomGaussian()*0.2;
@@ -27,8 +27,8 @@ class Particle {
 
   void render() {
      pushStyle();
-     stroke(100);
-     strokeWeight(6);
+     stroke(50);
+     strokeWeight(10);
      point(loc.x, loc.y, loc.z);
      popStyle();
   }

@@ -1,4 +1,3 @@
-
 import java.util.*; 
 
 class TerrainTransition{
@@ -20,7 +19,7 @@ class TerrainTransition{
   public TerrainTransition(float start, float end, int blendLevel, PVector[][] points, PImage lower, PImage higher){
     this.start = start;
     this.end = end;
-    range = abs(start-end);
+    this.range = abs(start-end);
     this.blendLevel = blendLevel;
     this.points = points;
     this.lower = lower.copy();
@@ -34,7 +33,6 @@ class TerrainTransition{
   
   PShape getBlendedShape(){
       
-    float now = millis();
     for(int i = 0; i < levels.length; i++){
       int[] maskArray = new int[textureSize*textureSize];
       int[] reverseMaskArray = new int[textureSize*textureSize];
@@ -57,26 +55,14 @@ class TerrainTransition{
       for(int x = 0; x < points[z].length-1; x++){
         for(int i = 0; i < levels.length; i++){
           if(points[x][z].y <= start-i*(range/blendLevel) && points[x][z].y > start-(i+1)*(range/blendLevel)){
-            PVector n = PVector.sub(points[x][z], points[x+1][z], null).cross(PVector.sub(points[x][z+1], points[x+1][z], null));
-            n.normalize();
-            
-            float textureScale = chunkSize/100;
-            
-            levels[i].normal(n.x, -n.y, n.z);
-            levels[i].noStroke();
-            levels[i].vertex(points[x][z].x, points[x][z].y, points[x][z].z, (x*scale)/textureScale, (z*scale)/textureScale);
-            levels[i].vertex(points[x+1][z].x, points[x+1][z].y, points[x+1][z].z, ((x+1)*scale)/textureScale, (z*scale)/textureScale);
-            levels[i].vertex(points[x+1][z+1].x, points[x+1][z+1].y, points[x+1][z+1].z, ((x+1)*scale)/textureScale, ((z+1)*scale)/textureScale);
-            levels[i].vertex(points[x][z+1].x, points[x][z+1].y, points[x][z+1].z, (x*scale)/textureScale, ((z+1)*scale)/textureScale);
-            
+            new Chunk().addSurfaceToShape(levels[i], points, x, z);
           }
         }
       }
     }
-    //println(millis() - now + "ms");
     
     for(int i = 0; i < levels.length; i++){
-      levels[i].endShape();
+      levels[i].endShape(CLOSE);
       blendedShape.addChild(levels[i]);
     }
     
